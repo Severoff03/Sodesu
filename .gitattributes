@@ -1,0 +1,12 @@
+# Нормализация переводов строк, чтобы GitHub корректно рендерил markdown
+* text=auto eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.bat text eol=crlf
+# Бинарные файлы
+*.apk binary
+*.png binary
+*.jpg binary
+*.keystore binary

@@ -11,8 +11,8 @@ android/app/build/
 android/local.properties
 *.iml
 .DS_Store
-# релизные APK — грузятся как ассеты в GitHub Releases, не в репозиторий
-release/*.apk
+# папка релиза — патчноут и APK грузятся как ассеты в GitHub Releases, не в репозиторий
+/release/
 # ключи подписи
 *.keystore
 *.jks

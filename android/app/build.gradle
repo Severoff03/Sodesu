@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Подпись релиза: если рядом есть key.properties — используется для release.
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file("key.properties")
+if (keystorePropsFile.exists()) { keystoreProps.load(new FileInputStream(keystorePropsFile)) }
+
+android {
+    namespace 'com.genki.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.genki.app"
+        minSdk 21
+        targetSdk 34
+        versionCode 10
+        versionName "0.9"
+    }
+
+    // Берём веб-приложение напрямую из ../../www (единый источник, без дублей)
+    sourceSets {
+        main {
+            assets.srcDirs = ['../../www']
+        }
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (keystorePropsFile.exists()) { signingConfig signingConfigs.release }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.work:work-runtime:2.9.1'
+}

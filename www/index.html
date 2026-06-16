@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e1a">
+<title>そうです</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><img src="assets/icon.png" alt=""><b>そう<span>です</span></b></div>
+    <button data-go="home" class="active"><span class="ic">🏠</span> Главная</button>
+    <button data-go="study"><span class="ic">🎴</span> Учить</button>
+    <button data-go="test"><span class="ic">📝</span> Тест</button>
+    <button data-go="kanji"><span class="ic">漢</span> Кандзи</button>
+    <button data-go="dict"><span class="ic">🔍</span> Словарь</button>
+    <button data-go="grammar"><span class="ic">文</span> Грамматика</button>
+    <button data-go="settings"><span class="ic">⚙️</span> Настройки</button>
+  </aside>
+
+  <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+  <header class="topbar"><img class="logo" src="assets/icon.png" alt=""><h1>そう<span>です</span></h1></header>
+
+  <main>
+    <!-- HOME -->
+    <section class="view active" id="view-home">
+      <div class="greet-card card">
+        <p class="greet" id="greet">こんにちは！</p>
+        <p class="phrase-jp" id="phraseJp"></p>
+      </div>
+      <div class="cta-row">
+        <button class="btn primary" data-go="study">🎴 Учить</button>
+        <button class="btn" data-go="test">📝 Тест</button>
+      </div>
+      <p class="due-line">К повторению сегодня: <b id="homeDue">0</b></p>
+      <div class="stats-grid">
+        <div class="stat card" id="mKanji"></div>
+        <div class="stat card" id="mWords"></div>
+        <div class="stat card" id="mGram"></div>
+      </div>
+      <div class="block-title">Активность <span style="color:var(--muted2);font-weight:500;text-transform:none"> · нажми для статистики</span></div>
+      <div class="card card-pad"><div id="cal"></div></div>
+    </section>
+
+    <!-- STUDY -->
+    <section class="view" id="view-study">
+      <div class="study-wrap">
+        <div class="study-top"><div class="count">Повторить: <b id="dueLeft">0</b> · новых <b id="newLeft">0</b></div>
+          <button class="btn ghost" style="margin-left:auto;padding:8px 12px;font-size:13px" data-go="settings">⚙️ Лимиты</button></div>
+        <div id="studyArea"></div>
+      </div>
+    </section>
+
+    <!-- KANJI -->
+    <section class="view" id="view-kanji">
+      <div class="chips" id="kStatus"></div>
+      <div class="chips" id="kLibs"></div>
+      <div class="chips" id="kFilters"></div>
+      <div class="kgrid" id="kGrid"></div>
+    </section>
+
+    <!-- DICTIONARY -->
+    <section class="view" id="view-dict">
+      <div class="search"><input id="dictInput" type="search" placeholder="Поиск: кандзи, кана, English, русский…" autocomplete="off"></div>
+      <p class="hint-line">Свайп карточки: → знаю · ← убрать из «знаю»</p>
+      <div class="chips" id="dStatus"></div>
+      <div class="chips" id="dLibs"></div>
+      <div class="chips" id="dFilters"></div>
+      <p class="dict-meta" id="dictMeta"></p>
+      <div id="dictResults"></div>
+    </section>
+
+    <!-- GRAMMAR -->
+    <section class="view" id="view-grammar">
+      <div class="search"><input id="gramInput" type="search" placeholder="Поиск грамматики…" autocomplete="off"></div>
+      <p class="hint-line">Свайп карточки: → знаю · ← убрать из «знаю»</p>
+      <div class="chips" id="gStatus"></div>
+      <div class="chips" id="gLibs"></div>
+      <div class="chips" id="gFilters"></div>
+      <p class="dict-meta" id="gramMeta"></p>
+      <div id="gramResults"></div>
+    </section>
+
+    <!-- TEST -->
+    <section class="view" id="view-test">
+      <div class="test-wrap">
+        <div class="card card-pad" id="testSetup"></div>
+        <div id="testArea"></div>
+        <div id="testHistory" style="margin-top:20px"></div>
+      </div>
+    </section>
+
+    <!-- JLPT (изолированный модуль) -->
+    <section class="view" id="view-jlpt">
+      <div class="test-wrap"><div id="jlptArea"></div>
+        <button class="btn ghost" data-go="home" style="width:100%;margin-top:16px">← На главную</button></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <div class="block-title">Тема</div>
+      <div class="card card-pad">
+        <div class="theme-row" id="themeRow"></div>
+        <div class="yuru-variants" id="yuruRow"></div>
+      </div>
+
+      <div class="block-title">Материалы (библиотеки)</div>
+      <div class="card card-pad"><div id="libsRow"></div></div>
+
+      <div class="setting card">
+        <h3>Звук</h3>
+        <p>Тихие эффекты при действиях. У тем «дзен» и «ретро» — свои наборы.</p>
+        <label class="toggle"><input type="checkbox" id="soundToggle"> Включить звуки</label>
+        <label class="toggle"><input type="checkbox" id="soundStd"> Всегда стандартные эффекты (игнорировать тему)</label>
+        <div class="range-info">Громкость: <span id="volLbl">60%</span></div>
+        <input type="range" id="volume" min="0" max="100" step="5" value="60">
+      </div>
+
+      <div class="setting card">
+        <h3>Настройки дня</h3>
+        <p>Лимит новых карточек в день и фуригана в карточках «Учить».</p>
+        <div class="stepper"><span>Новых кандзи</span><button class="st-btn" data-step="newKanji" data-d="-1">−</button><b id="nkLbl">10</b><button class="st-btn" data-step="newKanji" data-d="1">+</button></div>
+        <div class="stepper"><span>Новых слов</span><button class="st-btn" data-step="newWords" data-d="-1">−</button><b id="nwLbl">10</b><button class="st-btn" data-step="newWords" data-d="1">+</button></div>
+        <div class="stepper"><span>Новой грамматики</span><button class="st-btn" data-step="newGrammar" data-d="-1">−</button><b id="ngLbl">5</b><button class="st-btn" data-step="newGrammar" data-d="1">+</button></div>
+        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="studyFuriSet"> Фуригана в карточках «Учить»</label>
+      </div>
+      <div class="setting card">
+        <h3>Комментарий грамматики</h3>
+        <p>Короткий перевод рядом с конструкцией в списке грамматики.</p>
+        <select id="gramCommentSel" class="q-input"><option value="auto">Авто (планшет — вкл, телефон — выкл)</option><option value="on">Всегда показывать</option><option value="off">Всегда скрывать</option></select>
+      </div>
+
+
+      <div class="setting card">
+        <h3>Моя библиотека</h3>
+        <p>Добавь свои слова, кандзи или грамматику.</p>
+        <div class="field"><select id="cType"><option value="words">Слово</option><option value="kanji">Кандзи</option><option value="grammar">Грамматика</option></select></div>
+        <input id="cF1" class="q-input" style="margin-bottom:8px"><input id="cF2" class="q-input" style="margin-bottom:8px"><input id="cF3" class="q-input" style="margin-bottom:10px">
+        <button class="btn primary" id="cAdd" style="width:100%">Добавить</button>
+        <button class="btn" id="libExport" style="width:100%;margin-top:8px">⬇️ Экспорт библиотек</button>
+        <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Импорт библиотек<input type="file" id="libImportFile" accept="application/json,.json" style="display:none"></label>
+      </div>
+
+      <div class="setting card">
+        <h3>Свой фон</h3>
+        <p>Загрузи изображение — оно станет фоном текущей темы.</p>
+        <input type="file" id="bgFile" accept="image/*" class="q-input" style="padding:8px">
+        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="bgFit"> Вписать фон целиком (иначе обрезать под окно)</label>
+        <button class="btn ghost danger" id="bgReset" style="margin-top:8px;width:100%">Сбросить фон темы</button>
+      </div>
+      <div class="setting card" id="syncCard">
+        <h3>Синхронизация прогресса</h3>
+        <p>Перенос на другое устройство и бэкап (сохраняется при переустановке APK).</p>
+        <button class="btn" id="syncExport" style="width:100%;margin-bottom:8px">⬇️ Экспорт в файл</button>
+        <label class="btn" style="display:block;text-align:center;margin-bottom:8px">⬆️ Импорт из файла<input type="file" id="syncImportFile" accept="application/json,.json" style="display:none"></label>
+        <button class="btn" id="syncShowCode" style="width:100%;margin-bottom:8px">🔑 Показать/скопировать код</button>
+        <textarea id="syncCode" class="q-input" placeholder="Вставь код с другого устройства…" style="display:none;width:100%;min-height:80px;margin-bottom:8px"></textarea>
+        <button class="btn primary" id="syncApplyCode" style="width:100%">Применить код</button>
+      </div>
+      <div class="setting card"><h3>Сброс прогресса</h3><p>Очистить статусы, активность и историю.</p><button class="btn danger" id="resetBtn">Сбросить весь прогресс</button></div>
+      <div class="setting card"><h3>О приложении</h3><p id="aboutTxt"></p></div>
+    </section>
+  </main>
+  </div>
+
+  <nav class="nav">
+    <button data-go="home" class="active"><span class="ic">🏠</span>Главная</button>
+    <button data-go="kanji"><span class="ic">漢</span>Кандзи</button>
+    <button data-go="dict"><span class="ic">🔍</span>Словарь</button>
+    <button data-go="grammar"><span class="ic">文</span>Грамм.</button>
+    <button data-go="settings"><span class="ic">⚙️</span>Настройки</button>
+  </nav>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+
+<script src="js/data.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/srs.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/listutil.js"></script>
+<script src="js/dictionary.js"></script>
+<script src="js/grammar.js"></script>
+<script src="js/kanjilist.js"></script>
+<script src="js/study.js"></script>
+<script src="js/test.js"></script>
+<script src="js/jlpt.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

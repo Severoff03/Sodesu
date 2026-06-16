@@ -1,0 +1,434 @@
+/* ============================================================
+   そうです — стили. 3 темы (dark/light/zen), телефон + планшет.
+   ============================================================ */
+:root{
+  --radius:18px; --radius-sm:12px; --nav-h:64px; --maxw:980px;
+  --jp:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+}
+/* ---------- DARK (по умолчанию) ---------- */
+:root,[data-theme="dark"]{
+  --bg:#0b0e1a; --bg2:#11152a; --panel:#161b34; --panel2:#1d2342; --line:#262d52;
+  --txt:#eef1ff; --muted:#9aa3cf; --muted2:#6f78a8;
+  --accent:#6c8bff; --accent2:#9d7bff; --red:#ff4d5e; --green:#46d39a; --amber:#ffb454; --blue:#52a8ff;
+  --shadow:0 10px 35px rgba(0,0,0,.45);
+  --bggrad: radial-gradient(1200px 600px at 80% -10%, rgba(108,139,255,.16), transparent 60%),
+            radial-gradient(900px 500px at -10% 110%, rgba(157,123,255,.12), transparent 55%);
+}
+/* ---------- LIGHT (белая с красными элементами) ---------- */
+[data-theme="light"]{
+  --bg:#fff7f5; --bg2:#fff; --panel:#ffffff; --panel2:#fdeeec; --line:#f3dad6;
+  --txt:#2a2230; --muted:#7c6f76; --muted2:#a99ca2;
+  --accent:#e2354b; --accent2:#ff5d73; --red:#e2354b; --green:#1fa971; --amber:#e08a1e; --blue:#d23b52;
+  --shadow:0 10px 30px rgba(226,53,75,.10);
+  --bggrad: radial-gradient(1100px 560px at 85% -12%, rgba(226,53,75,.10), transparent 60%),
+            radial-gradient(800px 480px at -10% 110%, rgba(255,93,115,.08), transparent 55%);
+}
+/* ---------- ZEN (зелёные природные цвета) ---------- */
+[data-theme="zen"]{
+  --bg:#0f1c14; --bg2:#13231a; --panel:#16271c; --panel2:#1d3326; --line:#274536;
+  --txt:#eaf3ec; --muted:#9fc4ab; --muted2:#6f9580;
+  --accent:#5fb98a; --accent2:#8fd6a8; --red:#d98c6a; --green:#6fcf97; --amber:#cbb46a; --blue:#79c4a6;
+  --shadow:0 10px 35px rgba(0,0,0,.4);
+  --bggrad: radial-gradient(1200px 600px at 80% -10%, rgba(95,185,138,.16), transparent 60%),
+            radial-gradient(900px 500px at -10% 110%, rgba(143,214,168,.10), transparent 55%);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+  background:var(--bggrad), var(--bg); color:var(--txt);
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none; transition:background .3s,color .3s;}
+.app{max-width:var(--maxw);margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+
+/* topbar (только иконка сверху) */
+.topbar{display:flex;align-items:center;gap:12px;padding:14px 18px;position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+.topbar .logo{width:34px;height:34px;border-radius:9px;object-fit:cover;box-shadow:var(--shadow)}
+.topbar h1{font-size:20px;margin:0;font-weight:700;font-family:var(--jp)}
+.topbar h1 span{color:var(--accent)}
+
+main{flex:1;padding:18px 16px calc(var(--nav-h) + 26px);}
+.view{display:none;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* nav */
+.nav{position:fixed;left:0;right:0;bottom:0;height:var(--nav-h);z-index:30;display:flex;justify-content:space-around;
+  background:color-mix(in srgb,var(--bg2) 92%,transparent);backdrop-filter:blur(14px);border-top:1px solid var(--line);}
+.nav button{flex:1;background:none;border:0;color:var(--muted2);font:inherit;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3px;font-size:11px;cursor:pointer;padding:0}
+.nav button .ic{font-size:20px;line-height:1;font-family:var(--jp)}
+.nav button.active{color:var(--accent)}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.btn{appearance:none;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font:inherit;font-weight:600;
+  padding:12px 16px;border-radius:var(--radius-sm);cursor:pointer;transition:transform .08s,background .15s}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border-color:transparent;color:#fff}
+.btn.ghost{background:transparent}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-size:12px;
+  background:var(--panel2);border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.pill.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.hint-line{font-size:12px;color:var(--muted2);margin:0 2px 12px}
+
+/* HOME */
+.greet-card{padding:22px 20px;margin-bottom:16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--accent2) 10%,transparent));}
+.greet{font-family:var(--jp);font-size:32px;font-weight:700;margin:0}
+.phrase-jp{font-family:var(--jp);font-size:16px;color:var(--muted);margin:12px 0 2px}
+.phrase-ru{font-size:12px;color:var(--muted2);margin:0}
+.cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cta-row .btn{padding:18px;font-size:16px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.cta-row .btn small{font-weight:500;opacity:.85;font-size:12px}
+.due-line{font-size:13px;color:var(--muted);margin:0 2px 16px}
+.due-line b{color:var(--amber)}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.stat{padding:14px 10px;text-align:center}
+.stat .n{font-size:26px;font-weight:800;line-height:1;color:var(--green)}
+.stat .l{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-top:6px}
+.stat .rest{font-size:11px;color:var(--muted);margin-top:4px}
+.block-title{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);font-weight:700;margin:0 2px 10px}
+.card-pad{padding:16px;margin-bottom:16px}
+
+/* calendar */
+.cal-grid{display:flex;gap:3px;overflow-x:auto;padding-bottom:4px}
+.cal-col{display:flex;flex-direction:column;gap:3px}
+.cal-d{width:13px;height:13px;border-radius:3px;background:var(--panel2);display:inline-block}
+.cal-d.l1{background:color-mix(in srgb,var(--green) 35%,var(--panel2))}
+.cal-d.l2{background:color-mix(in srgb,var(--green) 60%,var(--panel2))}
+.cal-d.l3{background:color-mix(in srgb,var(--green) 80%,var(--panel2))}
+.cal-d.l4{background:var(--green)}
+.cal-legend{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted2);margin-top:10px;flex-wrap:wrap;gap:8px}
+.cal-scale{display:flex;align-items:center;gap:3px}
+.cal-scale .cal-d{width:11px;height:11px}
+
+/* JLPT */
+.jlpt-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.jlpt{padding:14px 4px;text-align:center;font-weight:700;border:1px solid var(--line);background:var(--panel2);
+  color:var(--txt);border-radius:var(--radius-sm);cursor:pointer}
+.jlpt:active{transform:scale(.96)}
+
+/* STUDY */
+.study-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.study-top .count{font-size:13px;color:var(--muted)}.study-top .count b{color:var(--txt)}
+.flash{position:relative;min-height:330px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:26px;text-align:center;user-select:none;touch-action:pan-y;transition:transform .18s ease,opacity .18s ease;will-change:transform}
+.flash.swiping{transition:none}
+.flash .lesson-tag{position:absolute;top:14px;left:16px}
+.flash .freq-tag{position:absolute;top:16px;right:16px;color:var(--muted2);font-size:12px;font-family:var(--jp)}
+.flash .kanji{font-family:var(--jp);font-size:clamp(96px,30vw,180px);line-height:1;font-weight:600}
+.flash .word{font-family:var(--jp);font-size:clamp(48px,13vw,86px);line-height:1.15;font-weight:600;text-align:center}
+.flash .hint{margin-top:18px;color:var(--muted2);font-size:13px}
+.flash .back{width:100%;margin-top:18px;display:none}
+.flash.revealed .back{display:block;animation:fade .2s}.flash.revealed .hint{display:none}
+.sw-badge{position:absolute;top:50%;transform:translateY(-50%);font-size:22px;font-weight:800;padding:10px 16px;border-radius:14px;opacity:0;pointer-events:none;text-align:center;line-height:1.1}
+.sw-badge small{font-size:11px;font-weight:600}
+.sw-left{left:16px;color:var(--blue);border:2px solid var(--blue);background:color-mix(in srgb,var(--blue) 14%,transparent)}
+.sw-right{right:16px;color:var(--green);border:2px solid var(--green);background:color-mix(in srgb,var(--green) 14%,transparent)}
+.deck-switch{justify-content:center}.deck-switch .pill{font-family:var(--jp)}
+.ex{display:flex;gap:12px;align-items:baseline;padding:11px 4px;border-top:1px dashed var(--line);text-align:left}
+.ex .w{font-family:var(--jp);font-size:21px;font-weight:600;min-width:84px}
+.ex .rd{color:var(--accent);font-size:13px}
+.ex .mn{color:var(--muted);font-size:13px;margin-left:auto;text-align:right}
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.grade button{padding:14px 4px;font-size:13px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-weight:700;cursor:pointer}
+.grade .g-again{color:var(--red)}.grade .g-hard{color:var(--amber)}.grade .g-good{color:var(--blue)}.grade .g-easy{color:var(--green)}
+.grade small{display:block;font-weight:500;color:var(--muted2);font-size:10px;margin-top:3px}
+.know-btn{margin-top:10px;width:100%;color:var(--green);border-color:color-mix(in srgb,var(--green) 30%,transparent);background:color-mix(in srgb,var(--green) 8%,transparent)}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}.empty .big{font-size:52px;margin-bottom:10px}
+.progress{height:8px;border-radius:999px;background:var(--panel2);overflow:hidden}
+.progress>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--blue))}
+
+/* search / dict / grammar */
+.search{display:flex;gap:10px;margin-bottom:12px}
+.search input{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--txt);font:inherit;font-size:16px;padding:13px 15px;border-radius:var(--radius-sm);outline:none}
+.search input:focus{border-color:var(--accent)}
+.dict-meta{font-size:12px;color:var(--muted2);margin:0 2px 10px;font-family:var(--jp)}
+.entry{padding:13px 15px;margin-bottom:9px;display:flex;gap:14px;align-items:baseline}
+.entry .jp{font-family:var(--jp);font-size:23px;font-weight:600;min-width:90px}
+.entry .jp .kana{display:block;font-size:13px;color:var(--accent);font-weight:500}
+.entry .mean{flex:1}.entry .mean .en{font-size:15px}.entry .mean .ru{font-size:13px;color:var(--muted)}
+.entry .lz{font-size:11px;color:var(--muted2);white-space:nowrap;text-align:right}
+.entry.known-entry{border-color:color-mix(in srgb,var(--green) 55%,var(--line));background:color-mix(in srgb,var(--green) 9%,var(--panel))}
+.kbadge{display:inline-block;margin-top:4px;font-size:10px;color:#fff;background:var(--green);padding:2px 7px;border-radius:999px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:12px;cursor:pointer}
+.toggle input{appearance:none;width:42px;height:24px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);position:relative;cursor:pointer;transition:background .2s;flex:none}
+.toggle input:checked{background:var(--accent)}
+.toggle input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle input:checked::after{transform:translateX(18px)}
+
+/* TEST */
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.field label{font-size:12px;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
+.field select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font:inherit;font-size:15px;padding:11px 12px;border-radius:var(--radius-sm)}
+.test-head{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.test-card{padding:20px}
+.q-prompt{font-family:var(--jp);font-size:34px;font-weight:700;text-align:center;margin:6px 0 20px}
+.q-opts{display:grid;gap:10px}
+.q-opt{padding:15px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font:inherit;font-size:15px;border-radius:var(--radius-sm);cursor:pointer;text-align:left}
+.q-opt.ok{background:color-mix(in srgb,var(--green) 22%,var(--panel2));border-color:var(--green)}
+.q-opt.no{background:color-mix(in srgb,var(--red) 22%,var(--panel2));border-color:var(--red)}
+.q-input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);font:inherit;font-size:18px;padding:13px;border-radius:var(--radius-sm);outline:none}
+.q-fb{margin-top:12px;text-align:center;font-weight:700}.q-fb.ok{color:var(--green)}.q-fb.no{color:var(--red)}
+.jlpt-note{font-size:12px;color:var(--muted2);text-align:center;margin:10px 0}
+
+/* settings */
+.setting{padding:16px;margin-bottom:12px}.setting h3{margin:0 0 4px;font-size:15px}
+.setting p{margin:0 0 12px;font-size:12px;color:var(--muted)}
+.range-info{font-size:13px;color:var(--accent);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.theme-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.theme-btn{padding:14px 6px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel2);color:var(--txt);cursor:pointer;font:inherit;font-weight:600;font-size:13px;text-align:center}
+.theme-btn.on{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 40%,transparent)}
+.theme-btn .sw{display:block;height:22px;border-radius:7px;margin-bottom:8px}
+.sw-dark{background:linear-gradient(135deg,#161b34,#6c8bff)}
+.sw-light{background:linear-gradient(135deg,#fff,#e2354b)}
+.sw-zen{background:linear-gradient(135deg,#16271c,#6fcf97)}
+.danger{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,transparent);background:color-mix(in srgb,var(--red) 8%,transparent)}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:50;display:none;align-items:flex-end;justify-content:center;background:rgba(6,8,16,.6);backdrop-filter:blur(3px)}
+.modal.open{display:flex;animation:fade .2s}
+.sheet{width:100%;max-width:var(--maxw);background:var(--bg2);border-top-left-radius:24px;border-top-right-radius:24px;border:1px solid var(--line);padding:22px 20px calc(22px + env(safe-area-inset-bottom));max-height:82vh;overflow:auto;animation:slideup .25s}
+@keyframes slideup{from{transform:translateY(40px)}to{transform:none}}
+.sheet .grip{width:40px;height:4px;border-radius:999px;background:var(--line);margin:0 auto 16px}
+.sheet .big-kanji{font-family:var(--jp);font-size:96px;text-align:center;line-height:1;margin:4px 0 6px}
+.sheet .sub{text-align:center;color:var(--muted2);font-size:12px;margin-bottom:18px;font-family:var(--jp)}
+.sheet .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+
+/* sidebar (планшет) */
+.sidebar{display:none;flex-direction:column;gap:6px;width:230px;padding:24px 16px;border-right:1px solid var(--line);position:sticky;top:0;height:100vh}
+.sidebar .brand{display:flex;align-items:center;gap:11px;padding:6px 8px 20px}
+.sidebar .brand img{width:42px;height:42px;border-radius:11px}
+.sidebar .brand b{font-size:21px;font-family:var(--jp)}.sidebar .brand b span{color:var(--accent)}
+.sidebar button{display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--muted);font:inherit;font-size:15px;padding:13px 14px;border-radius:12px;cursor:pointer;text-align:left}
+.sidebar button .ic{font-size:20px;font-family:var(--jp)}
+.sidebar button.active{background:var(--panel2);color:var(--txt)}
+
+@media(min-width:760px){
+  :root{--nav-h:0px}
+  .app{flex-direction:row;max-width:1180px}
+  .topbar{display:none}.sidebar{display:flex}
+  main{padding:26px 30px;flex:1}
+  .kgrid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr))}
+  .flash{min-height:420px}.modal{align-items:center}.sheet{border-radius:24px;max-width:560px}
+  .study-wrap,.test-wrap{max-width:640px;margin:0 auto}
+}
+.kgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:9px}
+.kcell{aspect-ratio:1;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--panel);font-family:var(--jp);font-size:26px;font-weight:600;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;transition:transform .08s}
+.kcell:active{transform:scale(.92)}
+.kcell.known{background:color-mix(in srgb,var(--green) 16%,var(--panel));border-color:color-mix(in srgb,var(--green) 50%,var(--line));color:var(--green)}
+.kcell.learning{border-color:color-mix(in srgb,var(--blue) 55%,var(--line))}
+.kcell.known::after{content:"✓";position:absolute;top:2px;right:5px;font-size:11px;color:var(--green)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin:2px 2px 14px;flex-wrap:wrap}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+/* ===== Доп. темы из палитр ===== */
+[data-theme="retro"]{
+  --bg:#1c1b18; --bg2:#232220; --panel:#2a2824; --panel2:#332f29; --line:#403a31;
+  --txt:#e7dcc7; --muted:#b3a589; --muted2:#857a64;
+  --accent:#B83A2D; --accent2:#cf5a44; --red:#B83A2D; --green:#6f8a72; --amber:#DCC9A9; --blue:#4E6851;
+  --shadow:0 10px 35px rgba(0,0,0,.5);
+  --bggrad:radial-gradient(1100px 560px at 85% -12%, rgba(184,58,45,.16), transparent 60%),
+           radial-gradient(800px 480px at -10% 110%, rgba(78,104,81,.14), transparent 55%);
+}
+[data-theme="retroblue"]{
+  --bg:#15171c; --bg2:#1c1f26; --panel:#222631; --panel2:#2b303c; --line:#39404e;
+  --txt:#e8d8c9; --muted:#aeb4c0; --muted2:#7c8493;
+  --accent:#f3701e; --accent2:#ff8a3d; --red:#f3701e; --green:#6b8f6f; --amber:#e8d8c9; --blue:#4b607f;
+  --shadow:0 10px 35px rgba(0,0,0,.5);
+  --bggrad:radial-gradient(1100px 560px at 85% -12%, rgba(243,112,30,.14), transparent 60%),
+           radial-gradient(800px 480px at -10% 110%, rgba(75,96,127,.18), transparent 55%);
+}
+[data-theme="tech"]{
+  --bg:#0a0d0a; --bg2:#0f140e; --panel:#141a12; --panel2:#1b2418; --line:#27331f;
+  --txt:#eef5e6; --muted:#9fb595; --muted2:#6c7d64;
+  --accent:#B2E50F; --accent2:#1CBBD0; --red:#e2554b; --green:#B2E50F; --amber:#cfe50f; --blue:#1CBBD0;
+  --shadow:0 10px 35px rgba(0,0,0,.55);
+  --bggrad:radial-gradient(1100px 560px at 85% -12%, rgba(178,229,15,.12), transparent 60%),
+           radial-gradient(800px 480px at -10% 110%, rgba(28,187,208,.12), transparent 55%);
+}
+[data-theme="neon"]{
+  --bg:#0a0a0d; --bg2:#101016; --panel:#15151c; --panel2:#1d1d27; --line:#2a2a3a;
+  --txt:#f3f0f6; --muted:#b5b0c4; --muted2:#7d7890;
+  --accent:#D00250; --accent2:#36E2F7; --red:#D00250; --green:#36E2F7; --amber:#f7d136; --blue:#174DE4;
+  --shadow:0 10px 35px rgba(0,0,0,.55);
+  --bggrad:radial-gradient(1100px 560px at 85% -12%, rgba(208,2,80,.16), transparent 60%),
+           radial-gradient(800px 480px at -10% 110%, rgba(23,77,228,.16), transparent 55%);
+}
+.sw-retro{background:linear-gradient(135deg,#DCC9A9,#B83A2D 60%,#4E6851)}
+.sw-retroblue{background:linear-gradient(135deg,#e8d8c9,#4b607f 55%,#f3701e)}
+.sw-tech{background:linear-gradient(135deg,#B2E50F,#0F355F 55%,#1CBBD0)}
+.sw-neon{background:linear-gradient(135deg,#D00250,#174DE4 55%,#36E2F7)}
+
+/* фуригана */
+ruby rt{font-size:.5em;color:var(--accent);font-weight:500}
+.phrase-hint{font-size:11px;color:var(--muted2);margin:8px 0 0;font-style:italic}
+.greet-card{cursor:pointer;user-select:none}
+
+/* секундомер в шапке теста */
+.test-head{gap:10px}
+#testTimer{color:var(--accent);font-variant-numeric:tabular-nums}
+
+/* планшет: прячем нижнюю навигацию (чтобы не было обрезанных иконок) */
+@media(min-width:760px){ .nav{display:none !important} }
+
+/* ===== v0.4: чистка тем, переопределения (идут последними — побеждают) ===== */
+/* «Ретро» = тёплая ретро-палитра (кремовый/слейт/оранжевый) */
+[data-theme="retro"]{
+  --bg:#15171c; --bg2:#1c1f26; --panel:#222631; --panel2:#2b303c; --line:#39404e;
+  --txt:#e8d8c9; --muted:#c2c8d2; --muted2:#8d96a6;
+  --accent:#f3701e; --accent2:#ff9043; --red:#e2554b; --green:#7fae74; --amber:#e8c98a; --blue:#5d7398;
+  --shadow:0 10px 35px rgba(0,0,0,.5);
+  --bggrad:radial-gradient(1100px 560px at 85% -12%, rgba(243,112,30,.16), transparent 60%),
+           radial-gradient(800px 480px at -10% 110%, rgba(93,115,152,.18), transparent 55%);
+}
+.sw-retro{background:linear-gradient(135deg,#e8d8c9 0%,#5d7398 50%,#f3701e 100%)}
+/* «Дзен» — мягче и умиротворённее (приглушённые шалфейные тона) */
+[data-theme="zen"]{
+  --bg:#10221a; --bg2:#16291f; --panel:#1a2f24; --panel2:#21392c; --line:#2c4a3a;
+  --txt:#e6efe6; --muted:#a7c4b1; --muted2:#7a9c88;
+  --accent:#7fc8a0; --accent2:#a9dcb8; --red:#cf9b7e; --green:#8fd3a6; --amber:#d6c58a; --blue:#86c2ad;
+  --shadow:0 12px 40px rgba(0,0,0,.35);
+  --bggrad:radial-gradient(1200px 640px at 78% -12%, rgba(127,200,160,.14), transparent 62%),
+           radial-gradient(900px 520px at -12% 112%, rgba(169,220,184,.10), transparent 58%);
+}
+.sw-zen{background:linear-gradient(135deg,#1a2f24,#7fc8a0)}
+
+/* градиенты: гарантированно заполняют всю кнопку + читаемость */
+.btn.primary{background-color:var(--accent);background-image:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.pill.on{background-color:var(--accent);background-image:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
+.jlpt{background-image:none}
+
+/* словарь: русский ярче, английский — дополнение */
+.entry .ru.ru-main{color:var(--txt);font-size:15px;font-weight:600;line-height:1.25}
+.entry .en.en-sub{color:var(--muted2);font-size:12px;margin-top:2px}
+.entry .en{color:var(--muted)}
+
+/* избранное */
+.fav{cursor:pointer;font-size:16px;color:var(--amber);line-height:1}
+.fav.on{color:var(--amber)} .fav:not(.on){color:var(--muted2)}
+
+/* свайп по строкам списка */
+.entry[data-uid]{touch-action:pan-y;cursor:grab;will-change:transform}
+
+/* подсказка снизу в карточке */
+.hint-bottom{margin-top:12px;text-align:center;color:var(--muted2);font-size:12px}
+
+/* тумблеры библиотек */
+#libsRow .toggle{margin-bottom:10px} #libsRow .toggle:last-child{margin-bottom:0}
+
+/* ===== v0.5: аниме-темы (фон = пользовательские обои + затемнение) ===== */
+body{ background:var(--bggrad) center/cover no-repeat fixed, var(--bg); }
+
+[data-theme="shinkai"]{
+  --bg:#0b1424; --bg2:#0e1a30; --panel:#122036; --panel2:#1a2c4a; --line:#243a5e;
+  --txt:#eaf2ff; --muted:#a9c0e0; --muted2:#6f88ad;
+  --accent:#4aa3ff; --accent2:#7ec8ff; --red:#ff7a7a; --green:#5fc8a0; --amber:#ffcf6b; --blue:#4aa3ff;
+  --shadow:0 12px 40px rgba(0,0,0,.5);
+  --bggrad:linear-gradient(180deg,rgba(11,20,36,.86),rgba(11,20,36,.93)),url("../assets/themes/shinkai.jpg");
+}
+[data-theme="yurucamp"]{
+  --bg:#0f1f1c; --bg2:#143029; --panel:#16302b; --panel2:#1d3c34; --line:#2a5247;
+  --txt:#eef6ef; --muted:#a9cdbf; --muted2:#6f9585;
+  --accent:#4fb6a0; --accent2:#88d0b0; --red:#e08a6a; --green:#6fcf97; --amber:#ffb86b; --blue:#5ab6c8;
+  --shadow:0 12px 40px rgba(0,0,0,.5);
+  --bggrad:linear-gradient(180deg,rgba(15,31,28,.86),rgba(15,31,28,.93)),url("../assets/themes/yurucamp.jpg");
+}
+.sw-shinkai{background:linear-gradient(135deg,#7ec8ff,#1a2c4a 60%,#ffcf6b)}
+.sw-yurucamp{background:linear-gradient(135deg,#88d0b0,#16302b 60%,#ffb86b)}
+/* на фото-темах карточки чуть плотнее для читаемости */
+[data-theme="shinkai"] .card,[data-theme="yurucamp"] .card{backdrop-filter:saturate(1.05)}
+
+/* ===== v0.6: Yuru Camp — варианты фона + чиби ===== */
+[data-theme="yurucamp"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.86),rgba(15,31,28,.93)),url("../assets/themes/yuru/yuru1.jpg"); }
+[data-theme="yurucamp"][data-yuru="2"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.84),rgba(15,31,28,.92)),url("../assets/themes/yuru/yuru2.jpg"); }
+[data-theme="yurucamp"][data-yuru="3"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.85),rgba(15,31,28,.93)),url("../assets/themes/yuru/yuru3.jpg"); }
+[data-theme="yurucamp"][data-yuru="4"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.85),rgba(15,31,28,.93)),url("../assets/themes/yuru/yuru4.jpg"); }
+
+/* чиби в углу (показывается только в теме Yuru Camp; одна за раз) */
+#yuruChibi{position:fixed;right:8px;bottom:calc(var(--nav-h) + 8px);width:118px;max-width:30vw;z-index:25;
+  pointer-events:none;display:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.45));animation:chibiIn .5s ease}
+@keyframes chibiIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+[data-theme="yurucamp"] #yuruChibi.ready{display:block}
+@media(min-width:760px){ #yuruChibi{bottom:14px;right:14px;width:140px} }
+
+/* выбор варианта фона в настройках */
+.yuru-variants{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.yuru-variants .pill{cursor:pointer}
+
+/* ===== v0.7: фикс вёрстки — не переносить короткие подписи ===== */
+.pill,.jlpt,.theme-btn{white-space:nowrap}
+.deck-switch .pill{font-size:13px;padding:7px 12px}
+.theme-btn{font-size:12px;padding:12px 4px}
+.theme-row{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+.cta-row .btn{white-space:nowrap}
+.grade button{font-size:12px} .grade small{font-size:9px;white-space:nowrap}
+.stat .l{white-space:nowrap;font-size:10px;letter-spacing:.3px}
+.jlpt{font-size:15px}
+.lz{white-space:nowrap}
+/* чипсы фильтров: горизонтальный скролл вместо кривого переноса на узких экранах */
+#dStatus,#gStatus,#kStatus,#dLibs,#gLibs,#kLibs,.deck-switch{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+#dStatus::-webkit-scrollbar,#gStatus::-webkit-scrollbar,#kStatus::-webkit-scrollbar,.deck-switch::-webkit-scrollbar{height:0}
+[data-theme="yurucamp"][data-yuru="5"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.80),rgba(15,31,28,.90)),url("../assets/themes/yuru/yuru5.jpg"); }
+
+/* ===== v0.8: правки вёрстки/UX ===== */
+/* приветствие в одну строку */
+.greet{font-size:clamp(20px,6vw,30px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* ярче выделение «знаю», без боковой надписи */
+.entry.known-entry{border-color:var(--green);background:color-mix(in srgb,var(--green) 18%,var(--panel));box-shadow:inset 3px 0 0 var(--green)}
+/* убрать тяжёлые слои у строк (фикс лагов прокрутки) */
+.entry[data-uid]{will-change:auto}
+/* компактная главная, календарь не требует прокрутки */
+.cal-d{width:12px;height:12px}
+.stats-grid{margin-bottom:12px}.card-pad{margin-bottom:12px}.greet-card{margin-bottom:12px;padding:18px 18px}
+.cta-row{margin-bottom:10px}.due-line{margin-bottom:12px}.block-title{margin-bottom:8px}
+/* степперы лимитов (вместо ползунков — не задеть случайно) */
+.stepper{display:flex;align-items:center;gap:12px;margin:8px 0}
+.stepper span{flex:1;color:var(--muted);font-size:14px}
+.stepper b{min-width:34px;text-align:center;font-size:17px}
+.st-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:22px;line-height:1;cursor:pointer}
+.st-btn:active{transform:scale(.92)}
+
+/* ===== v0.8 заход 2: тест-варианты, библиотеки, фон/синхрон ===== */
+.pill.wip{opacity:.45;cursor:not-allowed}
+.lib-item{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.lib-item .toggle{margin-bottom:0;flex:1}
+.lib-range{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted2)}
+.lib-range select{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:5px 6px;font:inherit;font-size:13px}
+#testSetup .field select, #syncCode{width:100%}
+
+/* ===== v0.8 заход 3: темы ===== */
+/* 空 (бывш. Синкай): фон виднее */
+[data-theme="shinkai"]{ --bggrad:linear-gradient(180deg,rgba(11,20,36,.42),rgba(11,20,36,.6)),url("../assets/themes/shinkai.jpg"); }
+/* Yuru Camp: по умолчанию без картинки; варианты Фон 2 и Фон 4 */
+[data-theme="yurucamp"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.55),rgba(15,31,28,.62)); }
+[data-theme="yurucamp"][data-yuru="none"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.55),rgba(15,31,28,.62)); }
+[data-theme="yurucamp"][data-yuru="2"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.78),rgba(15,31,28,.88)),url("../assets/themes/yuru/yuru2.jpg"); }
+[data-theme="yurucamp"][data-yuru="4"]{ --bggrad:linear-gradient(180deg,rgba(15,31,28,.78),rgba(15,31,28,.88)),url("../assets/themes/yuru/yuru4.jpg"); }
+
+/* ===== v0.85 ===== */
+/* фон в фикс-слое — не прокручивается со страницей */
+body{ background:var(--bg) !important; }
+#bgLayer{ position:fixed; inset:0; z-index:-1; background:var(--bggrad); background-size:cover; background-position:center; background-repeat:no-repeat; transition:background-image .3s; }
+#bgLayer.contain{ background-size:contain; background-color:var(--bg); }
+
+/* Yuru Camp — палитра по арту (уютная зимняя) */
+[data-theme="yurucamp"]{
+  --bg:#1a2632; --bg2:#21303d; --panel:#243341; --panel2:#2c3f50; --line:#3a5163;
+  --txt:#eef4f7; --muted:#aec3cf; --muted2:#748d9b;
+  --accent:#57b0bb; --accent2:#e0746a; --red:#e0746a; --green:#7cc0a0; --amber:#e2c178; --blue:#57b0bb;
+  --shadow:0 12px 40px rgba(0,0,0,.45);
+  --bggrad:linear-gradient(180deg,rgba(26,38,50,.5),rgba(26,38,50,.6));
+}
+[data-theme="yurucamp"][data-yuru="none"]{ --bggrad:linear-gradient(180deg,rgba(26,38,50,.5),rgba(26,38,50,.6)); }
+[data-theme="yurucamp"][data-yuru="1"]{ --bggrad:linear-gradient(180deg,rgba(26,38,50,.45),rgba(26,38,50,.6)),url("../assets/themes/yuru/bg1.jpg"); }
+[data-theme="yurucamp"][data-yuru="2"]{ --bggrad:linear-gradient(180deg,rgba(26,38,50,.5),rgba(26,38,50,.62)),url("../assets/themes/yuru/bg2.jpg"); }
+.sw-yurucamp{background:linear-gradient(135deg,#57b0bb,#243341 55%,#e0746a)}
+
+/* кандзи не выделяются как текст при долгом нажатии */
+.kcell{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+
+/* ===== v0.9: описание кандзи/деталей всегда снизу экрана ===== */
+.modal{align-items:flex-end !important}
+@media(min-width:760px){ .modal{align-items:flex-end !important} .sheet{max-width:var(--maxw)} }

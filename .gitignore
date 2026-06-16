@@ -1,0 +1,19 @@
+# бэкапы и личные материалы — не в репозиторий
+/backups/
+/For Dev/
+# учебники Genki / JLPT — защищены авторским правом, не публиковать
+/Материалы/
+# Android build
+android/.gradle/
+android/.idea/
+key.properties
+android/app/build/
+android/local.properties
+*.iml
+.DS_Store
+# релизные APK — грузятся как ассеты в GitHub Releases, не в репозиторий
+release/*.apk
+# ключи подписи
+*.keystore
+*.jks
+key.properties

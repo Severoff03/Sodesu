@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Severoff03/sodesu/blob/main/docs/baner.png" alt="Sodesu">
+  <img src="docs/baner.png" alt="Sodesu">
 </p>
 
 # そうです · Sodesu

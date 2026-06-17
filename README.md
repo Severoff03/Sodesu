@@ -26,13 +26,13 @@
 
 ## 📱 Скриншоты
 
-| Главная | Кандзи | Словарь |
-|---|---|---|
-| ![Главная](docs/screenshots/home.jpg) | ![Кандзи](docs/screenshots/kanji.jpg) | ![Словарь](docs/screenshots/dict.jpg) |
-
-| Тест | Викторина |
+| Главная | Кандзи |
 |---|---|
-| ![Тест](docs/screenshots/test.jpg) | ![Викторина](docs/screenshots/quiz.jpg) |
+| ![Главная](docs/screenshots/home.jpg) | ![Кандзи](docs/screenshots/kanji.jpg) | 
+
+| Словарь | Викторина |
+|---|---|
+| ![Словарь](docs/screenshots/dict.jpg) | ![Викторина](docs/screenshots/quiz.jpg) |
 
 ---
 

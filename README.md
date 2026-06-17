@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/baner.png" alt="そうです · Sodesu" width="100%">
+  <img src="https://raw.githubusercontent.com/Severoff03/sodesu/main/docs/baner.png" alt="そうです · Sodesu" width="100%">
 </p>
 
 # そうです · Sodesu
@@ -63,6 +63,7 @@
 - [ ] Переезд на C++ (Bedrock ed.)
 - [ ] Релиз в RuStore
 - [ ] Версия под iOS
+- [ ] Библиотека по Кейго
 
 Текущий статус: бета. Библиотеки и инструментарий пока покрывают уровни **N5–N4**; более высокие уровни будут добавляться по мере изучения языка автором.
 

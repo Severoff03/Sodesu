@@ -1,6 +1,7 @@
 <p align="center">
   <img src="docs/baner.png" alt="Sodesu">
 </p>
+![Главная](docs/baner.png)
 
 # そうです · Sodesu
 

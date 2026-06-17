@@ -1,11 +1,3 @@
-<p align="center">
-<<<<<<< HEAD
-  <img src="https://github.com/Severoff03/sodesu/blob/main/docs/baner.jpg?raw=true" alt="そうです · Sodesu" width="100%">
-=======
-  <img src="docs/baner.png" alt="Sodesu">
->>>>>>> 3fd2993dac23123f27f1e637ea36d1494426b475
-</p>
-![Главная](docs/baner.jpg)
 
 # そうです · Sodesu
 

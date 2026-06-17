@@ -1,9 +1,8 @@
 
-<div align="center">
+<p align="center">
+  <img src="docs/baner1.png" alt="Sodesu">
+</p>
 
-![そうです · Sodesu](docs/baner1png)
-
-</div>
 
 # そうです · Sodesu
 

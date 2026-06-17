@@ -4,11 +4,25 @@
    ============================================================ */
 const Sync = (() => {
   const $ = id=>document.getElementById(id);
+  function showTextFallback(text, msg){
+    const ta=$('syncCode');
+    if(ta){ ta.style.display='block'; ta.value=text; ta.select(); try{ document.execCommand('copy'); }catch(_){} }
+    alert(msg||'Файл не удалось сохранить напрямую. Данные показаны в поле кода, их можно скопировать вручную.');
+  }
   function download(name, text, type){ try{
-    const b=new Blob([text],{type:type||'application/json'}); const u=URL.createObjectURL(b);
+    const mime=type||'application/json';
+    if(typeof File!=='undefined' && navigator.share && navigator.canShare){
+      const file=new File([text],name,{type:mime});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:name}).catch(()=>showTextFallback(text));
+        return;
+      }
+    }
+    if(!('download' in HTMLAnchorElement.prototype)){ showTextFallback(text); return; }
+    const b=new Blob([text],{type:mime}); const u=URL.createObjectURL(b);
     const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(u); a.remove(); },500);
-  }catch(e){ alert('Не удалось сохранить файл'); } }
+  }catch(e){ showTextFallback(text); } }
   function readFile(input, cb){ const f=input.files&&input.files[0]; if(!f) return; const r=new FileReader(); r.onload=()=>cb(r.result); r.readAsText(f); }
   const b64enc=s=>btoa(unescape(encodeURIComponent(s)));
   const b64dec=s=>decodeURIComponent(escape(atob(s.trim())));

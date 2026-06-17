@@ -11,6 +11,15 @@ const App = (() => {
   const PHRASES=[['お元気ですか？','Как дела?'],['今日の天気はどうですか？','Какая сегодня погода?'],['週末は何をしますか？','Что будешь делать на выходных?'],['趣味は何ですか？','Какое у тебя хобби?'],['朝ごはんを食べましたか？','Ты позавтракал?'],['今、何をしていますか？','Чем сейчас занят?'],['好きな食べ物は何ですか？','Какая любимая еда?'],['昨日は何をしましたか？','Что делал вчера?'],['どこに行きたいですか？','Куда хочешь поехать?'],['最近どうですか？','Как ты в последнее время?'],['何時に起きましたか？','Во сколько встал?'],['今日もがんばりましょう！','Постараемся и сегодня!']];
   function greeting(){ const h=new Date().getHours(); if(h<5)return'おやすみなさい'; if(h<10)return'おはようございます！'; if(h<17)return'こんにちは！'; if(h<23)return'今晩は！'; return'こんばんは！'; }
   function phrase(){ return PHRASES[Math.floor(Date.now()/(5*3600*1000))%PHRASES.length]; }
+  function notifyNativeActive(){
+    if(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.sodesu &&
+      typeof window.webkit.messageHandlers.sodesu.postMessage==='function'){
+      try{ window.webkit.messageHandlers.sodesu.postMessage({ type: "setActive" }); return; }catch(e){}
+    }
+    if(window.Android && typeof window.Android.setActive==='function'){
+      try{ window.Android.setActive(); }catch(e){}
+    }
+  }
 
   // ---- своя библиотека: пересборка D из базы + custom ----
   let baseKanji, baseWords, baseGrammar;
@@ -135,8 +144,7 @@ const App = (() => {
     baseGrammar=D.grammar.map(g=>({...g,uid:'g'+g.id}));
     mergeCustom();
     if(!THEMES.some(t=>t.id===Store.settings().theme)) Store.setSetting('theme','dark');
-    applyTheme(Store.settings().theme); Store.touchOpen();
-    if(window.Android && window.Android.setActive) try{ window.Android.setActive(); }catch(e){}
+    applyTheme(Store.settings().theme); Store.touchOpen(); notifyNativeActive();
     document.addEventListener('click',e=>{ const b=e.target.closest('[data-go]'); if(b) go(b.dataset.go); });
     window.addEventListener('popstate',()=>{ if(nav.length>1){ nav.pop(); go(nav[nav.length-1]||'home',true); } else { go('home',true); } });
     try{ history.replaceState({view:'home'},''); }catch(e){}

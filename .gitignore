@@ -9,6 +9,9 @@ android/.idea/
 key.properties
 android/app/build/
 android/local.properties
+# iOS build
+ios/build/
+ios/DerivedData/
 *.iml
 .DS_Store
 # папка релиза — патчноут и APK грузятся как ассеты в GitHub Releases, не в репозиторий

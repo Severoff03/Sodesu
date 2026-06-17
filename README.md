@@ -5,7 +5,7 @@
   <img src="docs/baner.png" alt="Sodesu">
 >>>>>>> 3fd2993dac23123f27f1e637ea36d1494426b475
 </p>
-![Главная](docs/baner.png)
+![Главная](docs/baner.jpg)
 
 # そうです · Sodesu
 

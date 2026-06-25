@@ -17,6 +17,13 @@ android/local.properties
 /data/
 /docs/backgraunde/
 /docs/4e1d8226cd9160ce875efaf2e49af8bb.jpg
+# тяжёлые исходники баннера (в README — лёгкий docs/baner1.jpg)
+/docs/baner.png
+/docs/baner1.png
+/docs/baner.jpg
+# dev-папка генерации JLPT-библиотек (готовые CSV лежат в libraries/jlpt/)
+/libraries-jlpt/
+__pycache__/
 # ключи подписи
 *.keystore
 *.jks

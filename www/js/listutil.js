@@ -11,8 +11,10 @@ const LU = (() => {
     return l===0?'Доп':'L'+l;
   }
   function esc(s){ return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  // Несколько значений через «;» → каждое с новой строки.
+  function ml(s){ return esc(s).replace(/\s*[;；]\s*/g,'<br>'); }
   // активные библиотеки, по которым строится список
-  const activeLibs = ()=> D.meta.libraries.filter(l=>Store.libOn(l.id));
+  const activeLibs = (section)=> D.meta.libraries.filter(l=>Store.srcOn(section||'deck', l.id));
   // свайп по строкам списка: вправо=знаю, влево=снять «знаю».
   // after(uid, action) — точечное обновление без полного ререндера списка.
   function attachSwipe(container, _unused, after){
@@ -29,5 +31,5 @@ const LU = (() => {
     };
     container.addEventListener('pointerup',end); container.addEventListener('pointercancel',end); container.addEventListener('pointerleave',end);
   }
-  return { libName, lessonLabel, esc, activeLibs, attachSwipe };
+  return { libName, lessonLabel, esc, ml, activeLibs, attachSwipe };
 })();

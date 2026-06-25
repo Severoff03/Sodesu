@@ -47,19 +47,39 @@ const Sync = (() => {
       else { if(c==='"') q=true; else if(c===','){ row.push(cell); cell=''; } else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n')i++; if(cell!==''||row.length){ row.push(cell); rows.push(row); row=[]; cell=''; } } else cell+=c; } }
     if(cell!==''||row.length){ row.push(cell); rows.push(row); } return rows; }
   function importCsv(name, text){
-    try{ const rows=parseCsv(text); if(!rows.length) return false;
-      let start=0; const h=rows[0].map(x=>x.toLowerCase());
-      if(h.includes('type')) start=1;
+    try{
+      text=String(text||'').replace(/^﻿/,''); // убрать BOM
+      const rows=parseCsv(text); if(!rows.length) return false;
+      const norm=s=>(s||'').replace(/^﻿/,'').trim().toLowerCase();
+      const head=rows[0].map(norm);
+      const hasHeader = head.includes('type')||head.includes('тип');
+      const findCol=names=>{ for(const n of names){ const i=head.indexOf(n); if(i>=0) return i; } return -1; };
+      // Карта колонок: по заголовку (поддержка translation_ru/translation_en и 7 колонок) либо позиционно.
+      const C = hasHeader ? {
+        type:findCol(['type','тип']),
+        group:findCol(['group','группа','занятие','тема','lesson','урок','level','уровень']),
+        kanji:findCol(['kanji','кандзи','word','слово','japanese','jp','expression']),
+        kana:findCol(['kana','кана','reading','чтение','furigana','reading_kana']),
+        ru:findCol(['translation_ru','translation','перевод','ru','russian','meaning','значение']),
+        en:findCol(['translation_en','english','en','meaning_en']),
+        pattern:findCol(['pattern','шаблон','template'])
+      } : { type:0, group:1, kanji:2, kana:3, ru:4, en:-1, pattern:5 };
+      const get=(r,i)=> (i>=0 && r[i]!=null) ? (''+r[i]).trim() : '';
       const libId=Store.addCustomLib(name||'Импорт', 'lessons');
-      const gmap={}; let gn=0;
-      for(let i=start;i<rows.length;i++){ const r=rows[i]; if(!r||r.length<2) continue;
-        const type=(r[0]||'').trim().toLowerCase(); const groupName=(r[1]||'1').trim();
+      const gmap={}; let gn=0, added=0;
+      for(let i=hasHeader?1:0;i<rows.length;i++){ const r=rows[i]; if(!r) continue;
+        const type=get(r,C.type).toLowerCase();
+        const groupName=get(r,C.group)||'1';
+        const kanji=get(r,C.kanji), kana=get(r,C.kana), ru=get(r,C.ru), en=get(r,C.en), pat=get(r,C.pattern);
+        const tr = ru||en; // перевод: русский, иначе английский
+        if(!kanji&&!kana&&!tr) continue;
         if(!(groupName in gmap)){ gmap[groupName]=++gn; }
-        const g=gmap[groupName]; const kanji=(r[2]||'').trim(), kana=(r[3]||'').trim(), tr=(r[4]||'').trim(), pat=(r[5]||'').trim();
-        if(type==='kanji') Store.addCustomItem(libId,'kanji',{c:kanji,m:tr},g,groupName);
-        else if(type==='grammar') Store.addCustomItem(libId,'grammar',{t:kanji,p:pat,m:tr},g,groupName);
-        else Store.addCustomItem(libId,'words',{j:kanji,k:kana,r:tr,e:''},g,groupName);
+        const g=gmap[groupName];
+        if(type==='kanji'||type==='кандзи'){ if(kanji&&tr){ Store.addCustomItem(libId,'kanji',{c:kanji,m:tr},g,groupName); added++; } }
+        else if(type==='grammar'||type==='грамматика'){ if(kanji&&tr){ Store.addCustomItem(libId,'grammar',{t:kanji,p:pat,m:tr},g,groupName); added++; } }
+        else { if((kana||kanji)&&tr){ Store.addCustomItem(libId,'words',{j:kanji,k:kana,r:tr,e:(ru?en:'')},g,groupName); added++; } }
       }
+      if(!added){ Store.removeCustomLib(libId); return false; }
       return true;
     }catch(e){ return false; }
   }

@@ -41,7 +41,7 @@ const Test = (() => {
     } else {
       html+=`<div class="field"><label>Библиотеки</label><div class="chips" id="tLibs">`+
         libsForVariant().map(l=>chip(l.name,vLib.has(l.id),'lib',l.id)).join('')+`</div></div>`;
-      html+=`<div class="field"><label>Уроки (можно несколько; пусто = все)</label><div class="chips" id="tLess">`+lessChips()+`</div></div>`;
+      html+=`<div class="field"><label>Уроки / темы (можно несколько; пусто = все)</label><div class="chips" id="tLess">`+lessChips()+`</div></div>`;
       html+=`<div class="field"><label>Что включать</label><div class="chips" id="tStatus">`+
         [['all','Все'],['new','Новое'],['learning','Учу'],['known','Знаю'],['recent','Недавно изученные']]
         .map(([v,l])=>chip(l,(vRecent?v==='recent':vStatus===v&&!vRecent),'st',v)).join('')+`</div></div>`;
@@ -57,8 +57,11 @@ const Test = (() => {
     $('testArea').innerHTML=''; bindSetup();
   }
   function lessChips(){
-    const ls=[...new Set(srcItems().filter(it=>vLib.has(it.lib)).map(it=>it.l))].sort((a,b)=>a-b);
-    return ls.map(l=>{ const lib=srcItems().find(it=>it.l===l&&vLib.has(it.lib)); return chip(LU.lessonLabel(lib?lib.lib:'g1',l),vLess.has(l),'less',l); }).join('')||'<span class="hint-line">нет уроков</span>';
+    // Ключ chips — составной «lib|l», чтобы уроки и темы разных библиотек не путались.
+    let out='';
+    [...vLib].forEach(lib=>{ const ls=[...new Set(srcItems().filter(it=>it.lib===lib).map(it=>it.l))].sort((a,b)=>a-b);
+      out+=ls.map(l=>chip(LU.lessonLabel(lib,l), vLess.has(lib+'|'+l), 'less', lib+'|'+l)).join(''); });
+    return out||'<span class="hint-line">нет уроков/тем</span>';
   }
   function countTimeRows(){
     return `<div class="field"><label>Число вопросов</label><select id="tCount">`+
@@ -70,7 +73,7 @@ const Test = (() => {
     const v=$('tVariant'); if(v) v.onclick=e=>{ const p=e.target.closest('[data-variant]'); if(!p)return; variant=p.dataset.variant; vLib.clear(); vLess.clear(); buildSetup(); };
     const jl=$('tJlpt'); if(jl) jl.onclick=e=>{ const p=e.target.closest('[data-jl]'); if(!p)return; vJlpt=+p.dataset.jl; buildSetup(); };
     const lb=$('tLibs'); if(lb) lb.onclick=e=>{ const p=e.target.closest('[data-lib]'); if(!p)return; const id=p.dataset.lib; if(vLib.has(id))vLib.delete(id); else vLib.add(id); vLess.clear(); buildSetup(); };
-    const le=$('tLess'); if(le) le.onclick=e=>{ const p=e.target.closest('[data-less]'); if(!p)return; const l=+p.dataset.less; if(vLess.has(l))vLess.delete(l); else vLess.add(l); buildSetup(); };
+    const le=$('tLess'); if(le) le.onclick=e=>{ const p=e.target.closest('[data-less]'); if(!p)return; const k=p.dataset.less; if(vLess.has(k))vLess.delete(k); else vLess.add(k); buildSetup(); };
     const st=$('tStatus'); if(st) st.onclick=e=>{ const p=e.target.closest('[data-st]'); if(!p)return; const s=p.dataset.st; if(s==='recent'){vRecent=true;} else {vRecent=false; vStatus=s;} buildSetup(); };
     if($('tMode')) $('tMode').onchange=e=>vMode=e.target.value;
     if($('tFuri')) $('tFuri').onchange=e=>vFuri=e.target.checked;
@@ -83,16 +86,18 @@ const Test = (() => {
   // ---------- запуск ----------
   function buildPool(){
     let list=srcItems().filter(it=>vLib.has(it.lib));
-    if(vLess.size) list=list.filter(it=>vLess.has(it.l));
+    if(vLess.size) list=list.filter(it=>vLess.has(it.lib+'|'+it.l));
     if(vRecent){ list=list.filter(it=>Store.status(it.uid)==='known').sort((a,b)=>((Store.get(b.uid)||{}).kt||0)-((Store.get(a.uid)||{}).kt||0)).slice(0,50); }
     else if(vStatus!=='all') list=list.filter(it=>statusOf(it)===vStatus);
     return list;
   }
+  // Дистракторы: сперва из того же занятия/темы и библиотеки, затем добор из общего пула.
+  function distractors(it){ let p=pool.filter(x=>x!==it && x.lib===it.lib && x.l===it.l); if(p.length<3){ const more=pool.filter(x=>x!==it && !(x.lib===it.lib&&x.l===it.l)); p=p.concat(shuffle(more).slice(0,3-p.length)); } return shuffle(p).slice(0,3); }
   function makeQuestions(list,count){
     const items=shuffle(list).slice(0,count);
     return items.map(it=>{ let prompt,correctKey,options;
-      if(vMode==='choose_jp'){ prompt=esc(ruv(it)); correctKey=jpPlain(it); options=shuffle([it,...shuffle(pool.filter(x=>x!==it)).slice(0,3)]).map(x=>({key:jpPlain(x),html:jpHtml(x)})); }
-      else { prompt=jpHtml(it); correctKey=ruv(it); options=shuffle([it,...shuffle(pool.filter(x=>x!==it)).slice(0,3)]).map(x=>({key:ruv(x),html:esc(ruv(x))})); }
+      if(vMode==='choose_jp'){ prompt=esc(ruv(it)); correctKey=jpPlain(it); options=shuffle([it,...distractors(it)]).map(x=>({key:jpPlain(x),html:jpHtml(x)})); }
+      else { prompt=jpHtml(it); correctKey=ruv(it); options=shuffle([it,...distractors(it)]).map(x=>({key:ruv(x),html:esc(ruv(x))})); }
       return { it, prompt, correctKey, options }; });
   }
   function start(){
@@ -100,7 +105,7 @@ const Test = (() => {
     vFuri=$('tFuri')?$('tFuri').checked:vFuri; vMode=$('tMode')?$('tMode').value:vMode; vCount=$('tCount')?+$('tCount').value:vCount; vTime=$('tTime')?+$('tTime').value:vTime;
     pool=buildPool();
     const vn={words:'Слова',kanji:'Кандзи',grammar:'Грамматика'}[variant];
-    label=vn+(vRecent?' · недавние':'')+(vLess.size?' · уроки '+[...vLess].join(','):'');
+    label=vn+(vRecent?' · недавние':'')+(vLess.size?' · разделов: '+vLess.size:'');
     if(pool.length<4){ $('testSetup').style.display='none'; $('testArea').innerHTML=card(`<div class="empty">Недостаточно карточек для теста (нужно ≥4). <button class="btn" id="bk">Назад</button></div>`); $('bk').onclick=backToSetup; return; }
     qs=makeQuestions(pool,Math.min(vCount,pool.length)); idx=0; score=0; answers=[];
     $('testSetup').style.display='none'; $('testHistory').style.display='none';

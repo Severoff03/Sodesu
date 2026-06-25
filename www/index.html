@@ -12,7 +12,7 @@
   <aside class="sidebar">
     <div class="brand"><img src="assets/icon.png" alt=""><b>そう<span>です</span></b></div>
     <button data-go="home" class="active"><span class="ic">🏠</span> Главная</button>
-    <button data-go="study"><span class="ic">🎴</span> Учить</button>
+    <button data-go="study"><span class="ic">🎴</span> Дека</button>
     <button data-go="test"><span class="ic">📝</span> Тест</button>
     <button data-go="kanji"><span class="ic">漢</span> Кандзи</button>
     <button data-go="dict"><span class="ic">🔍</span> Словарь</button>
@@ -32,14 +32,13 @@
         <p class="phrase-jp" id="phraseJp"></p>
       </div>
       <div class="cta-row">
-        <button class="btn primary" data-go="study">🎴 Учить</button>
+        <button class="btn primary" id="deckCta" data-go="study">🎴 Дека</button>
         <button class="btn" data-go="test">📝 Тест</button>
       </div>
-      <p class="due-line">К повторению сегодня: <b id="homeDue">0</b></p>
       <div class="stats-grid">
-        <div class="stat card" id="mKanji"></div>
-        <div class="stat card" id="mWords"></div>
-        <div class="stat card" id="mGram"></div>
+        <div class="stat card" id="mKanji" data-go="kanji"></div>
+        <div class="stat card" id="mWords" data-go="dict"></div>
+        <div class="stat card" id="mGram" data-go="grammar"></div>
       </div>
       <div class="block-title">Активность <span style="color:var(--muted2);font-weight:500;text-transform:none"> · нажми для статистики</span></div>
       <div class="card card-pad"><div id="cal"></div></div>
@@ -48,8 +47,8 @@
     <!-- STUDY -->
     <section class="view" id="view-study">
       <div class="study-wrap">
-        <div class="study-top"><div class="count">Повторить: <b id="dueLeft">0</b> · новых <b id="newLeft">0</b></div>
-          <button class="btn ghost" style="margin-left:auto;padding:8px 12px;font-size:13px" data-go="settings">⚙️ Лимиты</button></div>
+        <div class="study-top" id="studyTop"><div class="count">Осталось: <b id="leftLeft">0</b></div>
+          <button class="btn ghost" style="margin-left:auto;padding:8px 12px;font-size:13px" data-go="settings">⚙️ Настройки</button></div>
         <div id="studyArea"></div>
       </div>
     </section>
@@ -110,15 +109,23 @@
       <div class="block-title">Настройка деки</div>
       <div class="setting card">
         <h3>Материалы деки</h3>
-        <p>Какие библиотеки и занятия/темы участвуют в «Учить» и тестах.</p>
+        <p>Какие библиотеки и занятия/темы участвуют в «Дека» и тестах.</p>
+        <button class="btn" id="libsAll" style="width:100%;margin-bottom:10px">Выбрать всё / снять всё</button>
         <div id="libsRow"></div>
+      </div>
+      <div class="setting card">
+        <h3>Источники: Словарь · Кандзи · Грамматика</h3>
+        <p>Общий набор библиотек для этих разделов (отдельно от деки).</p>
+        <div id="srcRows"></div>
       </div>
       <div class="setting card">
         <h3>Лимиты и фуригана</h3>
         <div class="stepper"><span>Новых кандзи</span><button class="st-btn" data-step="newKanji" data-d="-1">−</button><b id="nkLbl">10</b><button class="st-btn" data-step="newKanji" data-d="1">+</button></div>
         <div class="stepper"><span>Новых слов</span><button class="st-btn" data-step="newWords" data-d="-1">−</button><b id="nwLbl">10</b><button class="st-btn" data-step="newWords" data-d="1">+</button></div>
         <div class="stepper"><span>Новой грамматики</span><button class="st-btn" data-step="newGrammar" data-d="-1">−</button><b id="ngLbl">5</b><button class="st-btn" data-step="newGrammar" data-d="1">+</button></div>
-        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="studyFuriSet"> Фуригана в карточках «Учить»</label>
+        <div class="stepper"><span>Пауза «Зазубрить» (мин)</span><button class="st-btn" data-step="cramCooldown" data-d="-1">−</button><b id="ccLbl">10</b><button class="st-btn" data-step="cramCooldown" data-d="1">+</button></div>
+        <div class="stepper"><span>«Знаю» подряд для выхода</span><button class="st-btn" data-step="cramNeed" data-d="-1">−</button><b id="cnLbl">3</b><button class="st-btn" data-step="cramNeed" data-d="1">+</button></div>
+        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="studyFuriSet"> Фуригана в карточках «Дека»</label>
       </div>
 
       <div class="setting card">
@@ -141,7 +148,7 @@
         <p>Свои библиотеки слов/кандзи/грамматики.</p>
         <button class="btn primary" id="libAddBtn" style="width:100%">➕ Добавить / редактировать</button>
         <button class="btn" id="libExportBtn" style="width:100%;margin-top:8px">⬇️ Экспорт библиотеки (.csv)</button>
-        <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Импорт библиотеки (.csv)<input type="file" id="libImportFile" accept=".csv,text/csv" style="display:none"></label>
+        <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Импорт библиотеки (.csv)<input type="file" id="libImportFile" style="display:none"></label>
       </div>
 
       <div class="setting card">
@@ -155,7 +162,7 @@
         <h3>Синхронизация прогресса</h3>
         <p>Сохрани копию прогресса в файл, чтобы перенести на другое устройство или восстановить после переустановки.</p>
         <button class="btn primary" id="syncExportFile" style="width:100%">⬇️ Сохранить копию (файл)</button>
-        <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Восстановить из файла<input type="file" id="syncImportFile" accept=".json,application/json,text/plain" style="display:none"></label>
+        <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Восстановить из файла<input type="file" id="syncImportFile" style="display:none"></label>
       </div>
       <div class="setting card">
         <h3>Поддержка</h3>
@@ -163,6 +170,7 @@
         <button class="btn" id="supportBtn" style="width:100%">🐞 Отправить репорт (GitHub)</button>
         <button class="btn primary" id="donateBtn" style="width:100%;margin-top:8px">💚 Поддержать проект (Boosty)</button>
       </div>
+      <div class="setting card"><h3>Архив</h3><p>Вернуть все отложенные в архив слова обратно в учёбу.</p><button class="btn" id="archClear" style="width:100%">🗄 Очистить архив</button></div>
       <div class="setting card"><h3>Сброс прогресса</h3><p>Очистить статусы, активность и историю.</p><button class="btn danger" id="resetBtn">Сбросить весь прогресс</button></div>
       <div class="setting card"><h3>О приложении</h3><p id="aboutTxt"></p></div>
     </section>

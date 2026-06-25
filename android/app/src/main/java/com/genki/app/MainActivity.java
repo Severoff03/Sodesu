@@ -90,9 +90,12 @@ public class MainActivity extends AppCompatActivity {
                 if (filePathCallback != null) { filePathCallback.onReceiveValue(null); }
                 filePathCallback = cb;
                 try {
-                    Intent i = params.createIntent();
+                    // Показываем все файлы: .csv/.json часто помечены как octet-stream/text-plain
+                    // и при фильтре по MIME становятся «серыми» (невыбираемыми).
+                    Intent i = new Intent(Intent.ACTION_GET_CONTENT);
                     i.addCategory(Intent.CATEGORY_OPENABLE);
-                    fileChooserLauncher.launch(i);
+                    i.setType("*/*");
+                    fileChooserLauncher.launch(Intent.createChooser(i, "Выберите файл"));
                 } catch (Exception e) {
                     filePathCallback = null;
                     Toast.makeText(MainActivity.this, "Не удалось открыть выбор файла", Toast.LENGTH_SHORT).show();
@@ -190,20 +193,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /** Ежедневный воркер ~ на 10:00. */
+    /** Ежедневные уведомления отключены: отменяем воркер (в т.ч. на уже установленных). */
     private void scheduleDaily(){
-        Calendar now = Calendar.getInstance();
-        Calendar next = Calendar.getInstance();
-        next.set(Calendar.HOUR_OF_DAY, 10);
-        next.set(Calendar.MINUTE, 0);
-        next.set(Calendar.SECOND, 0);
-        if (next.before(now)) next.add(Calendar.DATE, 1);
-        long delay = next.getTimeInMillis() - now.getTimeInMillis();
-
-        PeriodicWorkRequest req = new PeriodicWorkRequest.Builder(DailyWorker.class, 1, TimeUnit.DAYS)
-                .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                .build();
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
-                "souda_daily", ExistingPeriodicWorkPolicy.UPDATE, req);
+        try { WorkManager.getInstance(this).cancelUniqueWork("souda_daily"); } catch (Exception ignored) {}
     }
 }

@@ -5,6 +5,8 @@
 const Dict = (() => {
   const D = window.GENKI_DATA;
   let statusFilter='all', libFilter='all', lessonFilter=0;
+  let renderTimer=0, currentResults=[], currentQuery='', shown=0;
+  const PAGE=80;
   const $ = id=>document.getElementById(id);
   const norm = s=>(s||'').toLowerCase().trim();
   const uid = v=>v.uid||('w'+v.id);
@@ -23,22 +25,49 @@ const Dict = (() => {
     return out;
   }
   let _rev=-1;
+  function scheduleRender(q){
+    clearTimeout(renderTimer);
+    renderTimer=setTimeout(()=>render(q),80);
+  }
+  function entryHtml(v){
+    const id=uid(v); const known=Store.status(id)==='known'; const fav=Store.favHas(id); const hasJ=!!v.j; const arch=Store.isArchived(id);
+    return `<div class="entry card${known?' known-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
+      <div class="jp">${hasJ?LU.esc(v.j):LU.esc(v.k)}${hasJ?`<span class="kana">${LU.esc(v.k)}</span>`:''}</div>
+      <div class="mean"><div class="ru ru-main">${LU.ml(v.r)}</div><div class="en en-sub">${LU.ml(v.e)}</div></div>
+      <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.lessonLabel(v.lib,v.l)}</div>
+    </div>`;
+  }
+  function updateMeta(){
+    $('dictMeta').textContent=`Показано: ${shown} из ${currentResults.length} · 出典 Genki / материалы`;
+  }
+  function appendPage(){
+    const box=$('dictResults');
+    if(shown>=currentResults.length) return;
+    const next=currentResults.slice(shown, shown+PAGE);
+    shown+=next.length;
+    box.insertAdjacentHTML('beforeend', next.map(entryHtml).join(''));
+    updateMeta();
+    if(shown<currentResults.length) box.insertAdjacentHTML('beforeend','<div class="dict-more" id="dictMore">Загружаю дальше…</div>');
+  }
+  function removeMore(){ const m=$('dictMore'); if(m) m.remove(); }
+  function maybeLoadMore(){
+    if(!$('view-dict')||!$('view-dict').classList.contains('active')) return;
+    if(shown>=currentResults.length) return;
+    const nearBottom=window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-500;
+    if(nearBottom){ removeMore(); appendPage(); }
+  }
   function maybeRender(){ if(_rev!==Store.rev()) render(); }
   function render(q){
     _rev=Store.rev();
     if(q==null) q=$('dictInput').value;
-    const res=search(q);
-    $('dictMeta').textContent=`Найдено: ${res.length} · 出典 Genki / материалы`;
+    currentQuery=q;
+    currentResults=search(q);
+    shown=0;
     const box=$('dictResults');
-    if(!res.length){ box.innerHTML=`<div class="empty"><div class="big">🔍</div>Ничего не найдено</div>`; return; }
-    box.innerHTML=res.map(v=>{
-      const id=uid(v); const known=Store.status(id)==='known'; const fav=Store.favHas(id); const hasJ=!!v.j; const arch=Store.isArchived(id);
-      return `<div class="entry card${known?' known-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
-        <div class="jp">${hasJ?LU.esc(v.j):LU.esc(v.k)}${hasJ?`<span class="kana">${LU.esc(v.k)}</span>`:''}</div>
-        <div class="mean"><div class="ru ru-main">${LU.ml(v.r)}</div><div class="en en-sub">${LU.ml(v.e)}</div></div>
-        <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.lessonLabel(v.lib,v.l)}</div>
-      </div>`;
-    }).join('');
+    if(!currentResults.length){ $('dictMeta').textContent='Найдено: 0 · 出典 Genki / материалы'; box.innerHTML=`<div class="empty"><div class="big">🔍</div>Ничего не найдено</div>`; return; }
+    box.innerHTML='';
+    appendPage();
+    maybeLoadMore();
   }
   function chips(wrap,arr,cur,attr,cb){ wrap.innerHTML=arr.map(([v,l])=>`<span class="pill${String(v)===String(cur)?' on':''}" data-${attr}="${v}">${l}</span>`).join(''); wrap.onclick=e=>{ const p=e.target.closest(`[data-${attr}]`); if(!p)return; cb(p.dataset[attr]); }; }
   function buildStatus(){ chips($('dStatus'),[['all','Все'],['new','Новые'],['learning','Учу'],['known','Знаю'],['fav','★']],statusFilter,'st',v=>{ statusFilter=v; buildStatus(); render(); }); }
@@ -49,7 +78,8 @@ const Dict = (() => {
     chips(wrap,arr,lessonFilter,'less',v=>{ lessonFilter=+v; buildLessons(); render(); }); }
   function init(){
     buildStatus(); buildLibs(); buildLessons();
-    $('dictInput').addEventListener('input',()=>render());
+    $('dictInput').addEventListener('input',e=>{ scheduleRender(e.target.value); });
+    window.addEventListener('scroll',maybeLoadMore,{passive:true});
     const box=$('dictResults');
     box.addEventListener('click',e=>{ const f=e.target.closest('[data-fav]'); if(!f) return;
       const on=Store.favToggle(f.dataset.fav);
@@ -74,13 +104,14 @@ const Dict = (() => {
   }
   function openMenu(id){ const v=wordByUid(id); if(!v) return;
     const sheet=document.getElementById('sheet');
+    const cramOn=Store.settings().cramMode!==false;
     sheet.innerHTML=`<div class="grip"></div>
       <div class="big-kanji" style="font-size:46px">${LU.esc(v.j||v.k)}</div>
       <div class="sub">${LU.esc(v.k)} · ${LU.esc(v.r)}</div>
       <div class="actions" style="grid-template-columns:1fr 1fr">
         <button class="btn primary" data-act="known">✓ Знаю</button>
         <button class="btn" data-act="learn">🎴 В деку</button>
-        <button class="btn" data-act="cram">🔥 Зазубрить</button>
+        ${cramOn?'<button class="btn" data-act="cram">🔥 Зазубрить</button>':''}
         <button class="btn" data-act="archive">🗄 В архив</button>
         ${v.clib?`<button class="btn" data-act="edit" style="grid-column:1/-1">✏️ Редактировать (своя библиотека)</button>`:''}
         <button class="btn ghost" data-act="close" style="grid-column:1/-1">Закрыть</button></div>`;
@@ -93,6 +124,6 @@ const Dict = (() => {
       else if(a==='edit'){ document.getElementById('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(id); return; }
       document.getElementById('modal').classList.remove('open'); if(a!=='close') render(); };
   }
-  function refresh(){ libFilter='all'; lessonFilter=0; buildStatus(); buildLibs(); buildLessons(); render(); }
+  function refresh(){ libFilter='all'; lessonFilter=0; buildStatus(); buildLibs(); buildLessons(); render(currentQuery); }
   return { init, render, refresh, maybeRender };
 })();

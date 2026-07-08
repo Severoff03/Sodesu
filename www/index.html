@@ -40,7 +40,7 @@
         <div class="stat card" id="mWords" data-go="dict"></div>
         <div class="stat card" id="mGram" data-go="grammar"></div>
       </div>
-      <div class="block-title">Активность <span style="color:var(--muted2);font-weight:500;text-transform:none"> · нажми для статистики</span></div>
+      <div class="block-title">Активность</div>
       <div class="card card-pad"><div id="cal"></div></div>
     </section>
 
@@ -106,7 +106,34 @@
         <div class="yuru-variants" id="yuruRow"></div>
       </div>
 
-      <div class="block-title">Настройка деки</div>
+      <div class="setting card">
+        <h3>Расширенная кастомизация</h3>
+        <p>Режим «Зазубрить», настройки деки и отображение грамматики.</p>
+        <button class="btn primary" id="advancedBtn" style="width:100%">Открыть расширенную кастомизацию</button>
+      </div>
+      <div id="advancedSettings" class="advanced-settings">
+        <div class="block-title">Расширенная кастомизация</div>
+        <div class="setting card">
+          <h3>Режим «Зазубрить»</h3>
+          <label class="toggle"><input type="checkbox" id="cramModeSet"> Включить режим «Зазубрить»</label>
+          <div class="stepper"><span>Пауза «Зазубрить» (мин)</span><button class="st-btn" data-step="cramCooldown" data-d="-1">−</button><b id="ccLbl">10</b><button class="st-btn" data-step="cramCooldown" data-d="1">+</button></div>
+          <div class="stepper"><span>«Знаю» подряд для выхода</span><button class="st-btn" data-step="cramNeed" data-d="-1">−</button><b id="cnLbl">3</b><button class="st-btn" data-step="cramNeed" data-d="1">+</button></div>
+        </div>
+        <div class="setting card">
+          <h3>Настройки деки</h3>
+          <div class="stepper"><span>Кандзи в день</span><button class="st-btn" data-step="newKanji" data-d="-1">−</button><b id="nkLbl">10</b><button class="st-btn" data-step="newKanji" data-d="1">+</button></div>
+          <div class="stepper"><span>Слов в день</span><button class="st-btn" data-step="newWords" data-d="-1">−</button><b id="nwLbl">10</b><button class="st-btn" data-step="newWords" data-d="1">+</button></div>
+          <div class="stepper"><span>Грамматики в день</span><button class="st-btn" data-step="newGrammar" data-d="-1">−</button><b id="ngLbl">5</b><button class="st-btn" data-step="newGrammar" data-d="1">+</button></div>
+          <label class="toggle" style="margin-top:10px"><input type="checkbox" id="studyFuriSet"> Фуригана в карточках «Дека»</label>
+        </div>
+        <div class="setting card">
+          <h3>Комментарий грамматики</h3>
+          <p>Короткий перевод рядом с конструкцией в списке грамматики.</p>
+          <select id="gramCommentSel" class="q-input"><option value="auto">Авто (планшет — вкл, телефон — выкл)</option><option value="on">Всегда показывать</option><option value="off">Всегда скрывать</option></select>
+        </div>
+      </div>
+
+      <div class="block-title">Материалы</div>
       <div class="setting card">
         <h3>Материалы деки</h3>
         <p>Какие библиотеки и занятия/темы участвуют в «Дека» и тестах.</p>
@@ -118,29 +145,13 @@
         <p>Общий набор библиотек для этих разделов (отдельно от деки).</p>
         <div id="srcRows"></div>
       </div>
-      <div class="setting card">
-        <h3>Лимиты и фуригана</h3>
-        <div class="stepper"><span>Новых кандзи</span><button class="st-btn" data-step="newKanji" data-d="-1">−</button><b id="nkLbl">10</b><button class="st-btn" data-step="newKanji" data-d="1">+</button></div>
-        <div class="stepper"><span>Новых слов</span><button class="st-btn" data-step="newWords" data-d="-1">−</button><b id="nwLbl">10</b><button class="st-btn" data-step="newWords" data-d="1">+</button></div>
-        <div class="stepper"><span>Новой грамматики</span><button class="st-btn" data-step="newGrammar" data-d="-1">−</button><b id="ngLbl">5</b><button class="st-btn" data-step="newGrammar" data-d="1">+</button></div>
-        <div class="stepper"><span>Пауза «Зазубрить» (мин)</span><button class="st-btn" data-step="cramCooldown" data-d="-1">−</button><b id="ccLbl">10</b><button class="st-btn" data-step="cramCooldown" data-d="1">+</button></div>
-        <div class="stepper"><span>«Знаю» подряд для выхода</span><button class="st-btn" data-step="cramNeed" data-d="-1">−</button><b id="cnLbl">3</b><button class="st-btn" data-step="cramNeed" data-d="1">+</button></div>
-        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="studyFuriSet"> Фуригана в карточках «Дека»</label>
-      </div>
 
       <div class="setting card">
         <h3>Звук</h3>
-        <p>Тихие эффекты при действиях. У тем «дзен» и «ретро» — свои наборы.</p>
         <label class="toggle"><input type="checkbox" id="soundToggle"> Включить звуки</label>
         <label class="toggle"><input type="checkbox" id="soundStd"> Всегда стандартные эффекты (игнорировать тему)</label>
         <div class="range-info">Громкость: <span id="volLbl">60%</span></div>
         <input type="range" id="volume" min="0" max="100" step="5" value="60">
-      </div>
-
-      <div class="setting card">
-        <h3>Комментарий грамматики</h3>
-        <p>Короткий перевод рядом с конструкцией в списке грамматики.</p>
-        <select id="gramCommentSel" class="q-input"><option value="auto">Авто (планшет — вкл, телефон — выкл)</option><option value="on">Всегда показывать</option><option value="off">Всегда скрывать</option></select>
       </div>
 
       <div class="setting card">
@@ -151,13 +162,6 @@
         <label class="btn" style="display:block;text-align:center;margin-top:8px">⬆️ Импорт библиотеки (.csv)<input type="file" id="libImportFile" style="display:none"></label>
       </div>
 
-      <div class="setting card">
-        <h3>Свой фон</h3>
-        <p>Загрузи изображение — оно станет фоном текущей темы.</p>
-        <input type="file" id="bgFile" accept="image/*" class="q-input" style="padding:8px">
-        <label class="toggle" style="margin-top:10px"><input type="checkbox" id="bgFit"> Вписать фон целиком (иначе обрезать под окно)</label>
-        <button class="btn ghost danger" id="bgReset" style="margin-top:8px;width:100%">Сбросить фон темы</button>
-      </div>
       <div class="setting card" id="syncCard">
         <h3>Синхронизация прогресса</h3>
         <p>Сохрани копию прогресса в файл, чтобы перенести на другое устройство или восстановить после переустановки.</p>
@@ -188,6 +192,7 @@
 
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
 
+<script src="js/version.js"></script>
 <script src="js/data.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/sound.js"></script>

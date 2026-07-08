@@ -26,21 +26,19 @@ const Study = (() => {
   function rowEx(v){ return `<div class="ex"><span class="w">${ruby(v.j,v.k)}</span><span class="rd">${esc(v.k)}</span>
     <span class="mn">${esc(v.r)}<br><span style="color:var(--muted2)">${esc(v.e)}</span></span></div>`; }
   function typeOf(x){ return x.c!==undefined?'kanji':(x.p!==undefined?'grammar':'words'); }
-  const lim={kanji:()=>Store.settings().newKanji,words:()=>Store.settings().newWords,grammar:()=>Store.settings().newGrammar};
   const itemsFor={kanji:()=>D.kanji,words:()=>D.words,grammar:()=>D.grammar};
   function allItems(){ return D.kanji.concat(D.words,D.grammar); }
   function cramItems(){ const s=new Set(Store.cramList()); return allItems().filter(x=>s.has(x.uid)&&Store.cramReady(x.uid)); }
 
-  function remaining(){ return Math.max(0, lim[deck]() - Store.newDailyCount(deck)); }
-  function rebuild(){ q = mode==='cram' ? shuffle(cramItems()) : SRS.queue(itemsFor[deck](),Store,{newLimit:remaining()}).queue; }
+  function remaining(){ return Store.deckRemaining(deck); }
+  function rebuild(){ const left=remaining(); q = mode==='cram' ? shuffle(cramItems()) : (left>0?SRS.queue(itemsFor[deck](),Store,{newLimit:left,limit:left}).queue:[]); }
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   // При опустошении сессионной колоды пересобираем из актуального состояния —
   // иначе «на сегодня всё» при ещё оставшихся (по счётчикам) карточках.
   function next(){ revealed=false; noKnow=false; cur=q.shift()||null; if(!cur && mode!=='cram'){ rebuild(); cur=q.shift()||null; } render(); }
   function counters(){ const st=$('studyTop'); if(st) st.style.display=mode==='cram'?'none':'';
     if(mode==='cram')return;
-    // «Осталось» = карточки текущей сессии: любое взаимодействие листает (next) → −1.
-    if($('leftLeft')) $('leftLeft').textContent=q.length+(cur?1:0); }
+    if($('leftLeft')) $('leftLeft').textContent=Math.min(remaining(),q.length+(cur?1:0)); }
   function topbar(){
     if(mode==='cram') return `<div class="chips deck-switch"><span class="pill on">🔥 Зазубрить (${q.length+(cur?1:0)})</span>
       <span class="pill" id="cramExit">← выйти</span></div>`;
@@ -89,26 +87,26 @@ const Study = (() => {
       $('cKnow').onclick=()=>cramKnow();
       return;
     }
+    const cramOn=Store.settings().cramMode!==false;
     $('controls').innerHTML=`
-      <div class="grade" style="grid-template-columns:1fr 1fr 1fr">
+      <div class="grade" style="grid-template-columns:${cramOn?'1fr 1fr 1fr':'1fr 1fr'}">
         <button class="g-hard" data-g="1">Повторить завтра<small>≈1 день</small></button>
         <button class="g-easy" data-g="3">Повторить через неделю<small>≈7 дней</small></button>
-        <button class="g-cram" id="cramBtn">🔥 Зазубрить</button>
+        ${cramOn?'<button class="g-cram" id="cramBtn">🔥 Зазубрить</button>':''}
       </div>
       <div class="grade" style="grid-template-columns:1fr 1fr;margin-top:8px">
         <button class="btn know-btn" id="knowBtn">✓ Знаю</button>
         <button class="btn" id="arcBtn">🗄 В архив</button>
       </div>
       <div class="hint hint-bottom">свайп → знаю · ← дальше</div>`;
-    $('controls').querySelector('.grade').onclick=e=>{ const b=e.target.closest('[data-g]'); if(!b)return; const g=+b.dataset.g; const nw=wasNew();
-      Store.set(cur.uid,SRS.grade(Store.get(cur.uid),g)); Store.logActivity(1); if(nw) countNew(); Sound.play('correct'); onChange(); next(); };
-    $('cramBtn').onclick=()=>{ Store.setCram(cur.uid,true); const r=SRS.grade(Store.get(cur.uid),SRS.GRADE.HARD); Store.set(cur.uid,r); if(wasNew()) countNew(); Store.logActivity(1); Sound.play('add'); T('Добавлено в 🔥 Зазубрить'); onChange(); next(); };
+    $('controls').querySelector('.grade').onclick=e=>{ const b=e.target.closest('[data-g]'); if(!b)return; const g=+b.dataset.g;
+      Store.set(cur.uid,SRS.grade(Store.get(cur.uid),g)); consumeDeckCard(); Sound.play('correct'); next(); };
+    if(cramOn&&$('cramBtn')) $('cramBtn').onclick=()=>{ Store.setCram(cur.uid,true); const r=SRS.grade(Store.get(cur.uid),SRS.GRADE.HARD); Store.set(cur.uid,r); consumeDeckCard(); Sound.play('add'); T('Добавлено в 🔥 Зазубрить'); next(); };
     $('knowBtn').onclick=()=>{ markKnown(); next(); };
-    $('arcBtn').onclick=()=>{ const nw=wasNew(); Store.setArchive(cur.uid,true); if(nw) countNew(); Store.logActivity(1); Sound.play('add'); T('Отложено в архив'); onChange(); next(); };
+    $('arcBtn').onclick=()=>{ Store.setArchive(cur.uid,true); consumeDeckCard(); Sound.play('add'); T('Отложено в архив'); next(); };
   }
   function leftReveal(){
-    const nw=wasNew();
-    Store.set(cur.uid, SRS.grade(Store.get(cur.uid), SRS.GRADE.HARD)); Store.logActivity(1); if(nw) countNew(); Sound.play('add');
+    Store.set(cur.uid, SRS.grade(Store.get(cur.uid), SRS.GRADE.HARD)); consumeDeckCard(); Sound.play('add');
     reveal();
     // Отмечено «не знаю»: дальше любой свайп просто листает, штампы убираем.
     noKnow=true; const f=$('flash'); if(f) f.querySelectorAll('.sw-badge').forEach(b=>{ b.style.display='none'; });
@@ -117,8 +115,8 @@ const Study = (() => {
   // «Зазубрить»: «Знаю» — серия подряд (+1, пауза); «Не знаю» — сброс серии + пауза. Без счётчиков/тостов.
   function cramKnow(){ if(!cur) return; markKnown(true); const rem=Store.cramHit(cur.uid); if(rem>0) Store.cramSnooze(cur.uid); T(rem===0?'Слово выучено! 🎉':`Ещё ${rem} раз отметить «Знаю»`); next(); }
   function cramNo(){ if(!cur) return; Store.cramReset(cur.uid); Store.cramSnooze(cur.uid); next(); }
-  function countNew(){ Store.newDailyInc(deck); }
-  function markKnown(silent){ const nw=wasNew(); Store.set(cur.uid,{...(Store.get(cur.uid)||SRS.fresh()),s:'known',due:0}); Store.logActivity(1); if(nw) countNew(); if(!silent) Sound.play('known'); onChange(); }
+  function consumeDeckCard(){ if(mode!=='cram') Store.deckDailyDec(deck); Store.logActivity(1); onChange(); }
+  function markKnown(silent){ Store.set(cur.uid,{...(Store.get(cur.uid)||SRS.fresh()),s:'known',due:0}); consumeDeckCard(); if(!silent) Sound.play('known'); }
 
   function bindSwipe(el){
     if(!el) return; let x0=0,y0=0,dx=0,dy=0,drag=false; const TH=90;
@@ -137,13 +135,13 @@ const Study = (() => {
     function fly(dir,act){ el.style.transform=`translateX(${dir*600}px) rotate(${dir*30}deg)`; el.style.opacity='0';
       setTimeout(()=>{
         if(act==='known'){ if(mode==='cram'){ cramKnow(); } else { markKnown(); next(); } }
-        else if(act==='next'){ if(mode==='cram'){ q.push(cur); } else { const nw=wasNew(); Store.set(cur.uid, SRS.grade(Store.get(cur.uid), SRS.GRADE.HARD)); Store.logActivity(1); if(nw) countNew(); } next(); }
+        else if(act==='next'){ if(mode==='cram'){ q.push(cur); } else { Store.set(cur.uid, SRS.grade(Store.get(cur.uid), SRS.GRADE.HARD)); consumeDeckCard(); } next(); }
         else if(act==='skip'){ next(); }
         else { leftReveal(); el.style.transform=''; el.style.opacity='1'; }
       },170); }
   }
   function start(){ mode='normal'; rebuild(); next(); }
   // Сначала переход на экран (он вызовет start() в normal), затем включаем cram — иначе режим сбрасывался.
-  function startCram(){ if(window.App) App.go('study'); mode='cram'; rebuild(); next(); }
+  function startCram(){ if(Store.settings().cramMode===false){ T('Режим «Зазубрить» выключен'); return; } if(window.App) App.go('study'); mode='cram'; rebuild(); next(); }
   return { start, startCram, setOnChange, setDeck, counters };
 })();

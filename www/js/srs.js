@@ -26,7 +26,10 @@ const SRS = (() => {
     for(const k of pool){ const rec=store.get(k.uid); const st=rec?rec.s:'new';
       if(st==='known') continue; if(st==='new') fr.push(k); else if(isDue(rec)) due.push(k); }
     due.sort((a,b)=>store.get(a.uid).due-store.get(b.uid).due);
-    return { due, newCards:fr.slice(0,newLimit), queue:due.concat(fr.slice(0,newLimit)) };
+    const newCards=fr.slice(0,newLimit);
+    const queue=due.concat(newCards);
+    const limit=(opts&&opts.limit!=null)?opts.limit:null;
+    return { due, newCards, queue:limit==null?queue:queue.slice(0,limit) };
   }
   function counts(items,store){
     let due=0,learning=0,known=0,total=0;

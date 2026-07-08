@@ -5,7 +5,7 @@
 const App = (() => {
   const D = window.GENKI_DATA;
   const $ = id=>document.getElementById(id);
-  const VERSION='0.11 (beta)';
+  const VERSION=(window.SODESU_VERSION&&window.SODESU_VERSION.label)||'0.11 (beta)';
   const THEMES=[{id:'light',label:'Светлая'},{id:'dark',label:'Тёмная'},{id:'zen',label:'Дзен'},{id:'retro',label:'Ретро'},{id:'shinkai',label:'空'},{id:'yurucamp',label:'Yuru Camp'}];
   const THEME_BG={light:'#fff7f5',dark:'#0b0e1a',zen:'#10221a',retro:'#15171c',shinkai:'#0b1424',yurucamp:'#0f1f1c'};
   const PHRASES=[['お元気ですか？','Как дела?'],['今日の天気はどうですか？','Какая сегодня погода?'],['週末は何をしますか？','Что будешь делать на выходных?'],['趣味は何ですか？','Какое у тебя хобби?'],['朝ごはんを食べましたか？','Ты позавтракал?'],['今、何をしていますか？','Чем сейчас занят?'],['好きな食べ物は何ですか？','Какая любимая еда?'],['昨日は何をしましたか？','Что делал вчера?'],['どこに行きたいですか？','Куда хочешь поехать?'],['最近どうですか？','Как ты в последнее время?'],['何時に起きましたか？','Во сколько встал?'],['今日もがんばりましょう！','Постараемся и сегодня!']];
@@ -43,8 +43,7 @@ const App = (() => {
   }
 
   function metric(items){ const c=SRS.counts(items,Store); return {known:c.known, rest:c.total-c.known}; }
-  function deckLeft(deck, items){ const key={kanji:'newKanji',words:'newWords',grammar:'newGrammar'}[deck];
-    const newLimit=Math.max(0,(Store.settings()[key]||0)-Store.newDailyCount(deck)); const q=SRS.queue(items,Store,{newLimit}); return q.due.length+q.newCards.length; }
+  function deckLeft(deck, items){ const left=Store.deckRemaining(deck); if(left<=0) return 0; return SRS.queue(items,Store,{newLimit:left,limit:left}).queue.length; }
   let showRu=false;
   function home(){
     $('greet').textContent=greeting();
@@ -89,7 +88,7 @@ const App = (() => {
   function applyUserBg(t){ const L=bgLayer(); const bg=Store.bg(t); L.style.backgroundImage = bg ? `linear-gradient(rgba(8,10,16,.5),rgba(8,10,16,.62)),url(${bg})` : ''; L.classList.toggle('contain', Store.settings().bgFit==='contain'); }
   function applyYuruBg(v){ document.documentElement.setAttribute('data-yuru', v||'none'); }
   function applyIcon(t){ const src=t==='yurucamp'?'assets/themes/yuru/icon.jpg':'assets/icon.png'; document.querySelectorAll('.topbar .logo, .sidebar .brand img').forEach(im=>{ im.onerror=()=>{ im.onerror=null; im.src='assets/icon.png'; }; im.src=src; }); }
-  function buildYuru(){ const el=$('yuruRow'); if(!el) return; const hasBg=Store.settings().theme==='yurucamp'; el.style.display=hasBg?'':'none'; if(!hasBg){ el.innerHTML=''; return; } const cur=String(Store.settings().yuruBg||'1'); const opts=[['none','Без фона'],['1','Фон 1'],['2','Фон 2']]; el.innerHTML='<div class="hint-line" style="width:100%;margin:0 0 6px">Фон темы Yuru Camp</div>'+opts.map(([v,l])=>`<span class="pill${cur===v?' on':''}" data-yb="${v}">${l}</span>`).join(''); el.onclick=e=>{ const b=e.target.closest('[data-yb]'); if(!b)return; const v=b.dataset.yb; Store.setSetting('yuruBg',v); applyYuruBg(v); buildYuru(); Sound.play('tap'); }; }
+  function buildYuru(){ const el=$('yuruRow'); if(!el) return; const hasBg=Store.settings().theme==='yurucamp'; el.style.display=hasBg?'':'none'; if(!hasBg){ el.innerHTML=''; return; } const cur=String(Store.settings().yuruBg||'1'); const opts=[['none','Без фона'],['1','Фон 1'],['2','Фон 2']]; el.innerHTML=opts.map(([v,l])=>`<span class="pill${cur===v?' on':''}" data-yb="${v}">${l}</span>`).join(''); el.onclick=e=>{ const b=e.target.closest('[data-yb]'); if(!b)return; const v=b.dataset.yb; Store.setSetting('yuruBg',v); applyYuruBg(v); buildYuru(); Sound.play('tap'); }; }
   function buildThemes(){ $('themeRow').innerHTML=THEMES.map(t=>`<button class="theme-btn" data-theme="${t.id}"><span class="sw sw-${t.id}"></span>${t.label}</button>`).join('');
     $('themeRow').onclick=e=>{ const b=e.target.closest('[data-theme]'); if(!b)return; Store.setSetting('theme',b.dataset.theme); applyTheme(b.dataset.theme); syncSettings(); Sound.play('tap'); }; }
   function libLessons(id){ return [...new Set(D.words.concat(D.kanji,D.grammar).filter(x=>x.lib===id).map(x=>x.l))].sort((a,b)=>a-b); }
@@ -125,6 +124,7 @@ const App = (() => {
     if($('gramCommentSel')) $('gramCommentSel').value = s.grammarComment==null?'auto':(s.grammarComment?'on':'off');
     if($('bgFit')) $('bgFit').checked = s.bgFit==='contain';
     if($('studyFuriSet')) $('studyFuriSet').checked = !!s.studyFuri;
+    if($('cramModeSet')) $('cramModeSet').checked = s.cramMode!==false;
     buildLibs(); buildSrcRows(); buildYuru();
     $('aboutTxt').innerHTML=`<b>そうです</b> · версия <b>${VERSION}</b><br>Кандзи, слова и грамматика по Genki I & II + материалы.<br>Разработчик: <b>Mothman</b>.`;
   }
@@ -140,6 +140,8 @@ const App = (() => {
     if($('bgReset')) $('bgReset').onclick=()=>{ Store.setBg(Store.settings().theme,null); applyTheme(Store.settings().theme); };
     if($('bgFit')) $('bgFit').addEventListener('change',e=>{ Store.setSetting('bgFit', e.target.checked?'contain':'cover'); applyUserBg(Store.settings().theme); document.getElementById('bgLayer')&&document.getElementById('bgLayer').classList.toggle('contain', e.target.checked); });
     if($('studyFuriSet')) $('studyFuriSet').addEventListener('change',e=>Store.setSetting('studyFuri',e.target.checked));
+    if($('advancedBtn')) $('advancedBtn').onclick=()=>{ const box=$('advancedSettings'); if(!box)return; const open=!box.classList.contains('open'); box.classList.toggle('open',open); $('advancedBtn').textContent=open?'Скрыть расширенную кастомизацию':'Открыть расширенную кастомизацию'; Sound.play('tap'); };
+    if($('cramModeSet')) $('cramModeSet').addEventListener('change',e=>{ Store.setSetting('cramMode',e.target.checked); flame(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('supportBtn')) $('supportBtn').onclick=()=>openExternal('https://github.com/Severoff03/sodesu/issues/new');
     if($('donateBtn')) $('donateBtn').onclick=()=>openExternal('https://boosty.to/m0thman/donate');
     if($('libsAll')) $('libsAll').onclick=()=>{ const on=!D.meta.libraries.every(l=>Store.libOn(l.id)); D.meta.libraries.forEach(l=>Store.setLib(l.id,on)); buildLibs(); home(); Sound.play('tap'); };
@@ -282,7 +284,7 @@ const App = (() => {
     const close=()=>o.remove(); o.addEventListener('click',e=>{ if(e.target===o) close(); });
     o.querySelector('#wnOk').onclick=close;
   }
-  function flame(){ const b=$('flameBtn'); if(!b) return; const ready=Store.cramList().some(u=>Store.cramReady(u)); b.style.display=ready?'':'none'; b.onclick=()=>{ Study.startCram(); hint('h_cram','Зазубрить 🔥','Здесь только слова из категории «Зазубрить». Свайп вправо — «Знаю» (3 раза — слово выходит). Свайп влево — перевод, слово вернётся через 10 минут. «Ещё» — показать сразу.'); }; }
+  function flame(){ const b=$('flameBtn'); if(!b) return; if(Store.settings().cramMode===false){ b.style.display='none'; return; } const ready=Store.cramList().some(u=>Store.cramReady(u)); b.style.display=ready?'':'none'; b.onclick=()=>{ Study.startCram(); hint('h_cram','Зазубрить 🔥','Здесь только слова из категории «Зазубрить». Свайп вправо — «Знаю» (3 раза — слово выходит). Свайп влево — перевод, слово вернётся через 10 минут. «Ещё» — показать сразу.'); }; }
   function onboard(){ if(Store.onboarded()) return; const o=document.createElement('div'); o.id='onboard'; o.innerHTML='<div class="ob-card"><div class="ob-h">Как пользоваться</div><div class="ob-row">🎴 <b>Дека</b> — тап по карточке покажет перевод.</div><div class="ob-row">➡️ Свайп вправо — «знаю».</div><div class="ob-row">⬅️ Свайп влево — в деку (повтор позже).</div><div class="ob-row">🔥 «Зазубрить» — частый повтор сложных слов с главной.</div><div class="ob-row">📚 Материалы и лимиты — в Настройках.</div><div class="ob-row">⬇️ Можно докачать библиотеки (в т.ч. <b>JLPT</b>, на базе jisho) и импортировать через Настройки → Библиотеки.</div><button class="btn" id="obLibs" style="width:100%;margin-top:10px">📚 Где скачать библиотеки</button><button class="btn primary" id="obClose" style="width:100%;margin-top:8px">Понятно!</button></div>'; document.body.appendChild(o); const obl=document.getElementById('obLibs'); if(obl) obl.onclick=()=>openExternal('https://github.com/Severoff03/sodesu/tree/main/libraries'); document.getElementById('obClose').onclick=()=>{ Store.setOnboarded(); o.remove(); }; }
   function openLibEditor(preLib, preGroup){
     const libs=Store.customLibs(); const ph={words:['Кандзи (опц.)','Кана','Перевод'],kanji:['Кандзи (1 символ)','Значение',''],grammar:['Конструкция','Шаблон','Значение/описание']};

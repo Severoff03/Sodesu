@@ -7,6 +7,14 @@ def keystoreProps = new Properties()
 def keystorePropsFile = rootProject.file("key.properties")
 if (keystorePropsFile.exists()) { keystoreProps.load(new FileInputStream(keystorePropsFile)) }
 
+def versionText = file("../../www/js/version.js").text
+def versionCodeMatch = versionText =~ /code:\s*(\d+)/
+def versionNameMatch = versionText =~ /name:\s*['"]([^'"]+)['"]/
+def versionLabelMatch = versionText =~ /label:\s*['"]([^'"]+)['"]/
+def sodesuVersionCode = versionCodeMatch.find() ? versionCodeMatch.group(1).toInteger() : 1
+def sodesuVersionName = versionNameMatch.find() ? versionNameMatch.group(1) : "1.0"
+def sodesuVersionLabel = versionLabelMatch.find() ? versionLabelMatch.group(1) : sodesuVersionName
+
 android {
     namespace 'com.genki.app'
     compileSdk 34
@@ -15,8 +23,9 @@ android {
         applicationId "com.genki.app"
         minSdk 21
         targetSdk 34
-        versionCode 15
-        versionName "0.11"
+        versionCode sodesuVersionCode
+        versionName sodesuVersionName
+        resValue "string", "app_version", sodesuVersionLabel
     }
 
     // Берём веб-приложение напрямую из ../../www (единый источник, без дублей)

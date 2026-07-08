@@ -5,9 +5,10 @@
 const Store = (() => {
   const KEY='souda_progress_v3', SET='souda_settings_v3';
   const defState = { progress:{}, activity:{}, lastOpen:0, fav:{}, history:[],
-    cram:{}, cramHits:{}, cramCool:{}, archive:{}, customLibs:[], newDaily:{date:'',k:0,w:0,g:0}, onboarded:false, hints:{} };
+    cram:{}, cramHits:{}, cramCool:{}, archive:{}, customLibs:[], newDaily:{date:'',k:0,w:0,g:0},
+    deckDaily:{date:'',kanji:10,words:10,grammar:5}, onboarded:false, hints:{} };
   const defSettings = { theme:'dark', sound:true, soundSet:'theme', volume:0.6,
-    newKanji:10, newWords:10, newGrammar:5, lessMin:1, lessMax:23, yuruBg:'1', bgFit:'cover', studyFuri:false, cramCooldown:10, cramNeed:3,
+    newKanji:10, newWords:10, newGrammar:5, lessMin:1, lessMax:23, yuruBg:'1', bgFit:'cover', studyFuri:false, cramMode:true, cramCooldown:10, cramNeed:3,
     libs:{g1:true,g2:true,useful:true}, libLess:{}, libThemes:{}, customBg:{}, grammarComment:null,
     srcLibs:{}, deckLibs:null };
 
@@ -19,6 +20,7 @@ const Store = (() => {
   if(!settings.customBg) settings.customBg={};
   if(!settings.srcLibs) settings.srcLibs={};
   if(!state.newDaily) state.newDaily={date:'',k:0,w:0,g:0};
+  if(!state.deckDaily) state.deckDaily={date:'',kanji:settings.newKanji||10,words:settings.newWords||10,grammar:settings.newGrammar||5};
   if(!state.cram) state.cram={}; if(!state.cramHits) state.cramHits={}; if(!state.cramCool) state.cramCool={}; if(!state.archive) state.archive={}; if(!state.customLibs) state.customLibs=[]; if(!state.hints) state.hints={};
 
   let rev=0; // версия данных — для пропуска лишних ререндеров списков
@@ -27,13 +29,24 @@ const Store = (() => {
   function saveS(){ rev++; try{ localStorage.setItem(SET,JSON.stringify(settings)); }catch(e){} }
   function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   const DKEY={kanji:'k',words:'w',grammar:'g'};
+  const SKEY={newKanji:'kanji',newWords:'words',newGrammar:'grammar'};
+  const LIMIT={kanji:'newKanji',words:'newWords',grammar:'newGrammar'};
   function daily(){ const t=today(); if(state.newDaily.date!==t){ state.newDaily={date:t,k:0,w:0,g:0}; save(); } return state.newDaily; }
+  function deckDaily(){
+    const t=today();
+    if(state.deckDaily.date!==t){
+      state.deckDaily={date:t,kanji:settings.newKanji||0,words:settings.newWords||0,grammar:settings.newGrammar||0};
+      save();
+    }
+    for(const k of ['kanji','words','grammar']) if(state.deckDaily[k]==null) state.deckDaily[k]=settings[LIMIT[k]]||0;
+    return state.deckDaily;
+  }
 
   return {
     get:id=>state.progress[id], set:(id,rec)=>{ if(rec&&rec.s==='known') rec.kt=rec.kt||Date.now(); state.progress[id]=rec; save(); },
     status:id=>{ const r=state.progress[id]; return r?r.s:'new'; },
-    reset:()=>{ state.progress={}; state.activity={}; state.history=[]; state.fav={}; state.cram={}; state.archive={}; state.newDaily={date:'',k:0,w:0,g:0}; save(); },
-    settings:()=>settings, setSetting:(k,v)=>{ settings[k]=v; saveS(); },
+    reset:()=>{ state.progress={}; state.activity={}; state.history=[]; state.fav={}; state.cram={}; state.archive={}; state.newDaily={date:'',k:0,w:0,g:0}; state.deckDaily={date:'',kanji:settings.newKanji||0,words:settings.newWords||0,grammar:settings.newGrammar||0}; save(); },
+    settings:()=>settings, setSetting:(k,v)=>{ const dk=SKEY[k]; const old=settings[k]; settings[k]=v; if(dk){ const d=deckDaily(); const used=Math.max(0,(old||0)-(d[dk]||0)); d[dk]=Math.max(0,(v||0)-used); save(); } saveS(); },
     libOn:lib=>settings.libs[lib]!==false, setLib:(lib,on)=>{ settings.libs[lib]=on; saveS(); },
     // Источники по разделам: 'deck' использует общий libs; 'dict'/'kanji'/'grammar' — свои наборы.
     srcOn:(sec,lib)=>{ if(sec==='deck') return settings.libs[lib]!==false; const m=settings.srcLibs[sec]; return m?m[lib]!==false:true; },
@@ -44,6 +57,8 @@ const Store = (() => {
     activity:()=>state.activity,
     newDailyCount:deck=>daily()[DKEY[deck]]||0,
     newDailyInc:deck=>{ const d=daily(); if(DKEY[deck]) d[DKEY[deck]]=(d[DKEY[deck]]||0)+1; save(); },
+    deckRemaining:deck=>Math.max(0,deckDaily()[deck]||0),
+    deckDailyDec:deck=>{ const d=deckDaily(); if(d[deck]>0){ d[deck]-=1; save(); } return Math.max(0,d[deck]||0); },
     favHas:uid=>!!state.fav[uid], favToggle:uid=>{ if(state.fav[uid]) delete state.fav[uid]; else state.fav[uid]=1; save(); return !!state.fav[uid]; },
     isCram:uid=>!!state.cram[uid], setCram:(uid,on)=>{ if(on) state.cram[uid]=1; else delete state.cram[uid]; delete state.cramHits[uid]; save(); }, cramList:()=>Object.keys(state.cram),
     cramNeed:()=>settings.cramNeed!=null?settings.cramNeed:3, cramHits:uid=>state.cramHits[uid]||0,

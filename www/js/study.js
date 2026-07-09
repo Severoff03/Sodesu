@@ -12,8 +12,8 @@ const Study = (() => {
   function ruby(j,k){ return (furi()&&j&&/[一-鿿]/.test(j))?`<ruby>${esc(j)}<rt>${esc(k)}</rt></ruby>`:esc(j||k); }
   function wordFront(w){
     const text=w.k||w.j;
-    const btn=Store.settings().studyAudioButton!==false ? WordAudio.button(text, 'Прослушать', w.a||w.audio) : '';
-    return `<div class="word word-audio"><span>${ruby(w.j,w.k)}</span>${btn}</div>
+    const btn=Store.settings().studyAudioButton!==false ? `<div class="study-audio-corner">${WordAudio.button(text, 'Прослушать', w.a||w.audio)}</div>` : '';
+    return `${btn}<div class="word">${ruby(w.j,w.k)}</div>
       <div class="study-pitch">${Pitch.render(w.k||w.j, w.j||w.k, w.pa||w.pitch)}</div>`;
   }
   const T=(m)=>{ if(window.toast) toast(m); };

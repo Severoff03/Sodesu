@@ -147,7 +147,7 @@ main{flex:1;padding:18px 16px calc(var(--nav-h) + 26px);}
 .dict-more{text-align:center;color:var(--muted2);font-size:12px;padding:14px 0 22px}
 .entry{padding:13px 15px;margin-bottom:9px;display:flex;gap:14px;align-items:flex-start}
 .entry .jp{font-family:var(--jp);font-size:23px;font-weight:600;min-width:90px}
-.jp-line,.dict-sheet-head,.word-audio{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.jp-line,.dict-sheet-head{display:inline-flex;align-items:center;justify-content:center;gap:8px}
 .entry .jp .kana{display:block;font-size:13px;color:var(--accent);font-weight:500}
 .entry .jp .kana.only{margin-top:2px}
 .entry .mean{flex:1}.entry .mean .en{font-size:15px}.entry .mean .ru{font-size:13px;color:var(--muted)}
@@ -515,7 +515,8 @@ body{ background:var(--bg) !important; }
 .pitch .mora.hi{transform:translateY(-1px);color:var(--accent)}
 .pitch-var{margin-left:3px;color:var(--muted2);font-size:10px}
 .study-pitch{margin-top:6px;font-size:18px}
-.word-audio .speak-btn{width:34px;height:34px;font-size:13px}
+.study-audio-corner{position:absolute;right:18px;bottom:18px;z-index:2}
+.study-audio-corner .speak-btn{width:44px;height:44px;font-size:15px;background:color-mix(in srgb,var(--panel2) 82%,transparent)}
 @media(max-width:430px){
   .entry{gap:10px;padding:12px}
   .entry .jp{min-width:76px;font-size:20px}

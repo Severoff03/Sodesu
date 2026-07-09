@@ -44,6 +44,7 @@ const Pitch = (() => {
   }
   function render(kana, word, custom){
     kana = kana || word || '';
+    if(window.Store && Store.settings && Store.settings().pitchAccent === false) return `<span class="pitch plain">${esc(kana)}</span>`;
     const ms = morae(kana);
     const vars = variants(word, kana, custom);
     if(!ms.length) return '';
@@ -51,8 +52,7 @@ const Pitch = (() => {
     const accent = Number(vars[0]) || 0;
     const highs = pattern(ms.length, accent);
     const body = ms.map((m, i) => {
-      const drop = accent > 0 && accent === i + 1;
-      return `<span class="mora ${highs[i] ? 'hi' : 'lo'}${drop ? ' drop' : ''}">${esc(m)}</span>`;
+      return `<span class="mora ${highs[i] ? 'hi' : 'lo'}">${esc(m)}</span>`;
     }).join('');
     const more = vars.length > 1 ? `<span class="pitch-var">+${vars.length - 1}</span>` : '';
     return `<span class="pitch" title="Pitch accent: ${esc(String(vars.join(', ')))}">${body}${more}</span>`;

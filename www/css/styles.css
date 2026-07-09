@@ -513,7 +513,6 @@ body{ background:var(--bg) !important; }
 .pitch .mora::before{content:"";position:absolute;left:0;right:0;top:2px;border-top:2px solid currentColor}
 .pitch .mora.lo{transform:translateY(3px);color:var(--muted2)}
 .pitch .mora.hi{transform:translateY(-1px);color:var(--accent)}
-.pitch .mora.drop::after{content:"";position:absolute;right:-2px;top:2px;height:12px;border-right:2px solid currentColor}
 .pitch-var{margin-left:3px;color:var(--muted2);font-size:10px}
 .study-pitch{margin-top:6px;font-size:18px}
 .word-audio .speak-btn{width:34px;height:34px;font-size:13px}

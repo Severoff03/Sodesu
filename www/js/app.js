@@ -125,6 +125,7 @@ const App = (() => {
     if($('bgFit')) $('bgFit').checked = s.bgFit==='contain';
     if($('studyFuriSet')) $('studyFuriSet').checked = !!s.studyFuri;
     if($('studyAudioSet')) $('studyAudioSet').checked = s.studyAudioButton!==false;
+    if($('pitchAccentSet')) $('pitchAccentSet').checked = s.pitchAccent!==false;
     if($('cramModeSet')) $('cramModeSet').checked = s.cramMode!==false;
     buildLibs(); buildSrcRows(); buildYuru();
     $('aboutTxt').innerHTML=`<b>そうです</b> · версия <b>${VERSION}</b><br>Кандзи, слова и грамматика по Genki I & II + материалы.<br>Разработчик: <b>Mothman</b>.`;
@@ -142,6 +143,7 @@ const App = (() => {
     if($('bgFit')) $('bgFit').addEventListener('change',e=>{ Store.setSetting('bgFit', e.target.checked?'contain':'cover'); applyUserBg(Store.settings().theme); document.getElementById('bgLayer')&&document.getElementById('bgLayer').classList.toggle('contain', e.target.checked); });
     if($('studyFuriSet')) $('studyFuriSet').addEventListener('change',e=>Store.setSetting('studyFuri',e.target.checked));
     if($('studyAudioSet')) $('studyAudioSet').addEventListener('change',e=>{ Store.setSetting('studyAudioButton',e.target.checked); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
+    if($('pitchAccentSet')) $('pitchAccentSet').addEventListener('change',e=>{ Store.setSetting('pitchAccent',e.target.checked); refreshSection(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('advancedBtn')) $('advancedBtn').onclick=()=>{ const box=$('advancedSettings'); if(!box)return; const open=!box.classList.contains('open'); box.classList.toggle('open',open); $('advancedBtn').textContent=open?'Скрыть расширенную кастомизацию':'Открыть расширенную кастомизацию'; Sound.play('tap'); };
     if($('cramModeSet')) $('cramModeSet').addEventListener('change',e=>{ Store.setSetting('cramMode',e.target.checked); flame(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('supportBtn')) $('supportBtn').onclick=()=>openExternal('https://github.com/Severoff03/sodesu/issues/new');

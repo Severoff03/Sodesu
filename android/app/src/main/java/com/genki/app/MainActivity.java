@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioAttributes;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean ttsReady = false;
     private boolean ttsFailed = false;
     private String pendingSpeech = null;
+    private MediaPlayer ttsPlayer = null;
 
     // Содержимое файла, ожидающее выбора места сохранения (Storage Access Framework).
     private String pendingContent = null;
@@ -116,6 +119,7 @@ public class MainActivity extends AppCompatActivity {
 
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
+                tts.setSpeechRate(0.92f);
                 int result = tts.setLanguage(Locale.JAPAN);
                 if (result == TextToSpeech.LANG_MISSING_DATA
                         || result == TextToSpeech.LANG_NOT_SUPPORTED) {
@@ -177,15 +181,63 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             if (!ttsReady) {
-                Toast.makeText(this, "Озвучка недоступна", Toast.LENGTH_SHORT).show();
+                playOnlineJa(text);
                 return;
             }
+            int result;
             if (Build.VERSION.SDK_INT >= 21) {
-                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ja-word");
+                result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ja-word");
             } else {
-                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            }
+            if (result == TextToSpeech.ERROR) {
+                playOnlineJa(text);
             }
         });
+    }
+
+    private void playOnlineJa(String text){
+        try {
+            if (ttsPlayer != null) {
+                try { ttsPlayer.stop(); } catch (Exception ignored) {}
+                try { ttsPlayer.release(); } catch (Exception ignored) {}
+                ttsPlayer = null;
+            }
+            String url = "https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ja&q="
+                    + Uri.encode(text);
+            MediaPlayer player = new MediaPlayer();
+            ttsPlayer = player;
+            if (Build.VERSION.SDK_INT >= 21) {
+                player.setAudioAttributes(new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build());
+            }
+            player.setDataSource(url);
+            player.setOnPreparedListener(MediaPlayer::start);
+            player.setOnCompletionListener(mp -> {
+                try { mp.release(); } catch (Exception ignored) {}
+                if (ttsPlayer == mp) ttsPlayer = null;
+            });
+            player.setOnErrorListener((mp, what, extra) -> {
+                try { mp.release(); } catch (Exception ignored) {}
+                if (ttsPlayer == mp) ttsPlayer = null;
+                offerInstallTts();
+                return true;
+            });
+            player.prepareAsync();
+        } catch (Exception e) {
+            offerInstallTts();
+        }
+    }
+
+    private void offerInstallTts(){
+        Toast.makeText(this, "Нужен японский TTS или интернет", Toast.LENGTH_SHORT).show();
+        try {
+            Intent i = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
+            startActivity(i);
+        } catch (Exception ignored) {
+        }
     }
 
     void openExternal(String url){
@@ -253,6 +305,10 @@ public class MainActivity extends AppCompatActivity {
         if (tts != null) {
             tts.stop();
             tts.shutdown();
+        }
+        if (ttsPlayer != null) {
+            try { ttsPlayer.release(); } catch (Exception ignored) {}
+            ttsPlayer = null;
         }
         super.onDestroy();
     }

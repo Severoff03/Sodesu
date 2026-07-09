@@ -26,6 +26,9 @@ const WordAudio = (() => {
     if(playAudio(audio)) return true;
     text = (text || '').trim();
     if(!text){ unavailable(); return false; }
+    if(window.Android && Android.speakJa){
+      try{ Android.speakJa(text); return true; }catch(e){}
+    }
     if(canWebSpeech()){
       try{
         const u = new SpeechSynthesisUtterance(text);
@@ -38,9 +41,6 @@ const WordAudio = (() => {
         window.speechSynthesis.speak(u);
         return true;
       }catch(e){}
-    }
-    if(window.Android && typeof Android.speakJa === 'function'){
-      try{ Android.speakJa(text); return true; }catch(e){}
     }
     unavailable();
     return false;

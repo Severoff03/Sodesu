@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private WebView web;
     private TextToSpeech tts;
     private boolean ttsReady = false;
+    private boolean ttsFailed = false;
+    private String pendingSpeech = null;
 
     // Содержимое файла, ожидающее выбора места сохранения (Storage Access Framework).
     private String pendingContent = null;
@@ -112,15 +114,27 @@ public class MainActivity extends AppCompatActivity {
         web.addJavascriptInterface(new Bridge(this), "Android");
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
-        web.loadUrl("file:///android_asset/index.html");
-
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 int result = tts.setLanguage(Locale.JAPAN);
+                if (result == TextToSpeech.LANG_MISSING_DATA
+                        || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    result = tts.setLanguage(Locale.JAPANESE);
+                }
                 ttsReady = result != TextToSpeech.LANG_MISSING_DATA
                         && result != TextToSpeech.LANG_NOT_SUPPORTED;
+                ttsFailed = !ttsReady;
+                if (ttsReady && pendingSpeech != null) {
+                    String text = pendingSpeech;
+                    pendingSpeech = null;
+                    speakJa(text);
+                }
+            } else {
+                ttsFailed = true;
             }
         });
+
+        web.loadUrl("file:///android_asset/index.html");
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
@@ -157,7 +171,12 @@ public class MainActivity extends AppCompatActivity {
     void speakJa(String text){
         if (text == null || text.trim().isEmpty()) return;
         runOnUiThread(() -> {
-            if (tts == null || !ttsReady) {
+            if (tts == null || (!ttsReady && !ttsFailed)) {
+                pendingSpeech = text;
+                Toast.makeText(this, "Озвучка запускается", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!ttsReady) {
                 Toast.makeText(this, "Озвучка недоступна", Toast.LENGTH_SHORT).show();
                 return;
             }

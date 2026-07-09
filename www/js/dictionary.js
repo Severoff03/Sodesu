@@ -10,17 +10,51 @@ const Dict = (() => {
   const $ = id=>document.getElementById(id);
   const norm = s=>(s||'').toLowerCase().trim();
   const uid = v=>v.uid||('w'+v.id);
+  const jpKey = v=>(v.j||v.k||'').trim()+'|'+(v.k||'').trim();
+  const groupId = key=>'wg:'+key;
+  const groupItems = v=>v&&v._items?v._items:[v];
+  const itemIds = v=>groupItems(v).map(uid);
+  const unique = arr=>[...new Set(arr.filter(Boolean))];
   function statusOf(v){ const s=Store.status(uid(v)); return (s==='learning'||s==='review')?'learning':s; }
+  function groupStatus(g){
+    const own=Store.status(uid(g));
+    if(own==='known') return 'known';
+    const sts=groupItems(g).map(statusOf);
+    if(sts.includes('known')) return 'known';
+    if(sts.includes('learning')) return 'learning';
+    return 'new';
+  }
+  function groupFav(g){ return groupItems(g).some(v=>Store.favHas(uid(v))); }
+  function groupArchived(g){ const xs=groupItems(g); return xs.length&&xs.every(v=>Store.isArchived(uid(v))); }
   function base(){ return D.words.filter(v=>Store.srcOn('mat',v.lib)); }
+  function grouped(list){
+    const map=new Map();
+    for(const v of list){
+      const key=jpKey(v);
+      if(!map.has(key)) map.set(key,{...v,uid:groupId(key),_items:[],_key:key});
+      map.get(key)._items.push(v);
+    }
+    return [...map.values()].map(g=>{
+      const first=g._items[0];
+      g.j=first.j; g.k=first.k; g.r=unique(g._items.map(x=>x.r)).join('; ');
+      g.e=unique(g._items.map(x=>x.e)).join('; ');
+      g.pa=first.pa||first.pitch||''; g.a=first.a||first.audio||'';
+      return g;
+    });
+  }
   function search(q){
     q=norm(q); let list=base();
     if(libFilter!=='all') list=list.filter(v=>v.lib===libFilter);
     if(lessonFilter) list=list.filter(v=>v.l===lessonFilter);
-    if(statusFilter==='fav') list=list.filter(v=>Store.favHas(uid(v)));
-    else if(statusFilter!=='all') list=list.filter(v=>statusOf(v)===statusFilter);
+    list=grouped(list);
+    if(statusFilter==='fav') list=list.filter(groupFav);
+    else if(statusFilter!=='all') list=list.filter(v=>groupStatus(v)===statusFilter);
     if(!q) return list;
     const out=[];
-    for(const v of list){ if(v.j.includes(q)||v.k.includes(q)||norm(v.e).includes(q)||norm(v.r).includes(q)){ out.push(v); } }
+    for(const v of list){
+      const hay=groupItems(v).map(x=>[x.j,x.k,x.e,x.r,LU.libName(x.lib),LU.lessonLabel(x.lib,x.l)].join(' ')).join(' ');
+      if(norm(hay).includes(q)) out.push(v);
+    }
     out.sort((a,b)=>{ const am=a.k.startsWith(q)||a.j.startsWith(q)||norm(a.r).startsWith(q)?0:1; const bm=b.k.startsWith(q)||b.j.startsWith(q)||norm(b.r).startsWith(q)?0:1; return am-bm; });
     return out;
   }
@@ -29,12 +63,23 @@ const Dict = (() => {
     clearTimeout(renderTimer);
     renderTimer=setTimeout(()=>render(q),80);
   }
+  function jpBlock(v, sheet){
+    const word=v.j||v.k, kana=v.k||word, speak=kana||word;
+    const pitch=Pitch.render(kana, word, v.pa||v.pitch);
+    const btn=WordAudio.button(speak, 'Прослушать', v.a||v.audio);
+    if(sheet) return `<div class="dict-sheet-head"><div class="big-kanji" style="font-size:46px">${LU.esc(word)}</div>${btn}</div>
+      <div class="sub">${pitch}</div>`;
+    if(word===kana) return `<div class="jp"><div class="jp-line"><span>${pitch}</span>${btn}</div></div>`;
+    return `<div class="jp"><div class="jp-line"><span>${LU.esc(word)}</span>${btn}</div><span class="kana">${pitch}</span></div>`;
+  }
   function entryHtml(v){
-    const id=uid(v); const known=Store.status(id)==='known'; const fav=Store.favHas(id); const hasJ=!!v.j; const arch=Store.isArchived(id);
+    const id=uid(v); const known=groupStatus(v)==='known'; const fav=groupFav(v); const hasJ=!!v.j; const arch=groupArchived(v);
+    const src=unique(groupItems(v).map(x=>LU.libName(x.lib))).join(' · ');
+    const meanings=groupItems(v).map(x=>`<div class="dict-meaning"><b>${LU.esc(LU.libName(x.lib))}</b><span>${LU.ml(x.r)}</span>${x.e?`<small>${LU.ml(x.e)}</small>`:''}</div>`).join('');
     return `<div class="entry card${known?' known-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
-      <div class="jp">${hasJ?LU.esc(v.j):LU.esc(v.k)}${hasJ?`<span class="kana">${LU.esc(v.k)}</span>`:''}</div>
-      <div class="mean"><div class="ru ru-main">${LU.ml(v.r)}</div><div class="en en-sub">${LU.ml(v.e)}</div></div>
-      <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.lessonLabel(v.lib,v.l)}</div>
+      ${jpBlock(v)}
+      <div class="mean">${meanings}</div>
+      <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.esc(src)}</div>
     </div>`;
   }
   function updateMeta(){
@@ -82,10 +127,11 @@ const Dict = (() => {
     window.addEventListener('scroll',maybeLoadMore,{passive:true});
     const box=$('dictResults');
     box.addEventListener('click',e=>{ const f=e.target.closest('[data-fav]'); if(!f) return;
-      const on=Store.favToggle(f.dataset.fav);
+      const g=wordByUid(f.dataset.fav); const ids=itemIds(g); const on=!ids.some(id=>Store.favHas(id)); ids.forEach(id=>{ if(Store.favHas(id)!==on) Store.favToggle(id); });
       if(statusFilter==='fav'){ render(); } else { f.classList.toggle('on',on); f.textContent=on?'★':'☆'; } });
     // Точечное обновление вместо ререндера всего списка (плавность при отметке).
     LU.attachSwipe(box, null, (uid,action)=>{
+      const g=wordByUid(uid); itemIds(g).forEach(id=>Store.set(id, action==='known'?{...(Store.get(id)||SRS.fresh()),s:'known',due:0}:SRS.fresh()));
       if(statusFilter==='all'||statusFilter==='fav'){
         const node=box.querySelector('[data-uid="'+uid+'"]');
         if(node){ node.style.transform=''; node.style.opacity=''; node.classList.toggle('known-entry', action==='known'); }
@@ -94,7 +140,10 @@ const Dict = (() => {
     bindTap(box);
     render('');
   }
-  function wordByUid(id){ return D.words.find(v=>uid(v)===id); }
+  function wordByUid(id){
+    if(id&&id.startsWith('wg:')) return grouped(base()).find(v=>uid(v)===id);
+    return D.words.find(v=>uid(v)===id);
+  }
   // Меню действий открывается по одиночному тапу (не по зажатию). Свайпы остаются.
   function bindTap(box){
     if(box._tap) return; box._tap=true; let sx=0,sy=0,moved=false;
@@ -105,9 +154,10 @@ const Dict = (() => {
   function openMenu(id){ const v=wordByUid(id); if(!v) return;
     const sheet=document.getElementById('sheet');
     const cramOn=Store.settings().cramMode!==false;
+    const details=groupItems(v).map(x=>`<div class="dict-sheet-row"><b>${LU.esc(LU.libName(x.lib))}</b><span>${LU.lessonLabel(x.lib,x.l)}</span><p>${LU.ml(x.r)}</p>${x.e?`<small>${LU.ml(x.e)}</small>`:''}</div>`).join('');
     sheet.innerHTML=`<div class="grip"></div>
-      <div class="big-kanji" style="font-size:46px">${LU.esc(v.j||v.k)}</div>
-      <div class="sub">${LU.esc(v.k)} · ${LU.esc(v.r)}</div>
+      ${jpBlock(v, true)}
+      <div class="dict-sheet-details">${details}</div>
       <div class="actions" style="grid-template-columns:1fr 1fr">
         <button class="btn primary" data-act="known">✓ Знаю</button>
         <button class="btn" data-act="learn">🎴 В деку</button>
@@ -117,12 +167,20 @@ const Dict = (() => {
         <button class="btn ghost" data-act="close" style="grid-column:1/-1">Закрыть</button></div>`;
     const mo=document.getElementById('modal'); mo.dataset.stats=''; mo.classList.add('open');
     sheet.querySelector('.actions').onclick=e=>{ const b=e.target.closest('[data-act]'); if(!b)return; const a=b.dataset.act;
-      if(a==='known'){ Store.set(id,{...(Store.get(id)||SRS.fresh()),s:'known',due:0}); Sound.play('known'); if(window.toast)toast('Отмечено: знаю'); }
-      else if(a==='learn'){ Store.setArchive(id,false); Store.set(id,SRS.fresh()); if(window.toast)toast('В деку'); }
-      else if(a==='cram'){ Store.setArchive(id,false); Store.setCram(id,true); if(window.toast)toast('В «Зазубрить» 🔥'); }
-      else if(a==='archive'){ Store.setArchive(id,true); if(window.toast)toast('В архив 🗄'); }
+      const ids=itemIds(v);
+      if(a==='known'){ ids.forEach(x=>Store.set(x,{...(Store.get(x)||SRS.fresh()),s:'known',due:0})); Sound.play('known'); if(window.toast)toast('Отмечено: знаю'); }
+      else if(a==='learn'){ ids.forEach(x=>{ Store.setArchive(x,false); Store.set(x,SRS.fresh()); }); if(window.toast)toast('В деку'); }
+      else if(a==='cram'){ ids.forEach(x=>{ Store.setArchive(x,false); Store.setCram(x,true); }); if(window.toast)toast('В «Зазубрить» 🔥'); }
+      else if(a==='archive'){ ids.forEach(x=>Store.setArchive(x,true)); if(window.toast)toast('В архив 🗄'); }
       else if(a==='edit'){ document.getElementById('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(id); return; }
-      document.getElementById('modal').classList.remove('open'); if(a!=='close') render(); };
+      document.getElementById('modal').classList.remove('open');
+      const node=document.querySelector('[data-uid="'+id+'"]');
+      if(node){
+        if(a==='known') node.classList.add('known-entry');
+        if(a==='learn') node.classList.remove('known-entry','archived-entry');
+        if(a==='archive') node.classList.add('archived-entry');
+      }
+      if(statusFilter!=='all'&&a!=='close'&&a!=='cram') render(); };
   }
   function refresh(){ libFilter='all'; lessonFilter=0; buildStatus(); buildLibs(); buildLessons(); render(currentQuery); }
   return { init, render, refresh, maybeRender };

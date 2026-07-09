@@ -8,7 +8,7 @@ const Store = (() => {
     cram:{}, cramHits:{}, cramCool:{}, archive:{}, customLibs:[], newDaily:{date:'',k:0,w:0,g:0},
     deckDaily:{date:'',kanji:10,words:10,grammar:5}, onboarded:false, hints:{} };
   const defSettings = { theme:'dark', sound:true, soundSet:'theme', volume:0.6,
-    newKanji:10, newWords:10, newGrammar:5, lessMin:1, lessMax:23, yuruBg:'1', bgFit:'cover', studyFuri:false, cramMode:true, cramCooldown:10, cramNeed:3,
+    newKanji:10, newWords:10, newGrammar:5, lessMin:1, lessMax:23, yuruBg:'1', bgFit:'cover', studyFuri:false, studyAudioButton:true, cramMode:true, cramCooldown:10, cramNeed:3,
     libs:{g1:true,g2:true,useful:true}, libLess:{}, libThemes:{}, customBg:{}, grammarComment:null,
     srcLibs:{}, deckLibs:null };
 

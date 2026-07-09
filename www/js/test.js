@@ -1,5 +1,5 @@
 /* ============================================================
-   test.js — тесты. Вариант: Слова/Кандзи/Грамматика/JLPT/Текст(WIP)/Аудирование(WIP).
+   test.js — тесты. Вариант: Слова/Кандзи/Грамматика/JLPT/Аудио/Текст(WIP).
    Мультивыбор библиотек и уроков, статус (все/новое/учу/знаю/недавно),
    режим, число вопросов, лимит времени, фуригана. История с разбором.
    ============================================================ */
@@ -23,6 +23,8 @@ const Test = (() => {
   function kMeaning(k){ const w=(k.ex||[]).map(i=>D.vocab[i]).find(Boolean); return w?w.r:k.c; }
   const jpPlain=it=> variant==='grammar'?it.t : variant==='kanji'?it.c : (it.j||it.k);
   const ruv=it=> variant==='grammar'?it.m : variant==='kanji'?kMeaning(it) : it.r;
+  const audioText=it=>it.k||it.j||'';
+  const audioSrc=it=>it.a||it.audio||'';
   function jpHtml(it){ if(variant==='grammar') return esc(it.t); if(variant==='kanji') return esc(it.c);
     if(vFuri && it.j && /[一-鿿]/.test(it.j)) return `<ruby>${esc(it.j)}<rt>${esc(it.k)}</rt></ruby>`; return esc(it.j||it.k); }
 
@@ -31,9 +33,9 @@ const Test = (() => {
   function buildSetup(){
     if(vLib.size===0) libsForVariant().forEach(l=>vLib.add(l.id));
     const setup=$('testSetup');
-    const variants=[['words','Слова'],['kanji','Кандзи'],['grammar','Грамматика'],['jlpt','JLPT'],['text','Текст'],['audio','Аудирование']];
+    const variants=[['words','Слова'],['kanji','Кандзи'],['grammar','Грамматика'],['audio','Аудио'],['jlpt','JLPT'],['text','Текст']];
     let html=`<div class="field"><label>Вариант теста</label><div class="chips" id="tVariant">`+
-      variants.map(([v,l])=>{ const wip=(v==='text'||v==='audio'); return `<span class="pill${v===variant&&!wip?' on':''}${wip?' wip':''}" ${wip?'':`data-variant="${v}"`}>${l}${wip?' (WIP)':''}</span>`; }).join('')+`</div></div>`;
+      variants.map(([v,l])=>{ const wip=v==='text'; return `<span class="pill${v===variant&&!wip?' on':''}${wip?' wip':''}" ${wip?'':`data-variant="${v}"`}>${l}${wip?' (WIP)':''}</span>`; }).join('')+`</div></div>`;
     if(variant==='jlpt'){
       html+=`<div class="field"><label>Уровень</label><div class="chips" id="tJlpt">`+[5,4,3].map(n=>chip('N'+n,vJlpt===n,'jl',n)).join('')+`</div></div>`;
       html+=countTimeRows();
@@ -45,11 +47,12 @@ const Test = (() => {
       html+=`<div class="field"><label>Что включать</label><div class="chips" id="tStatus">`+
         [['all','Все'],['new','Новое'],['learning','Учу'],['known','Знаю'],['recent','Недавно изученные']]
         .map(([v,l])=>chip(l,(vRecent?v==='recent':vStatus===v&&!vRecent),'st',v)).join('')+`</div></div>`;
+      const typeOption=variant==='audio'?'':`<option value="type"${vMode==='type'?' selected':''}>Напечатать ответ</option>`;
       html+=`<div class="field"><label>Режим</label><select id="tMode">
-        <option value="choose_ru"${vMode==='choose_ru'?' selected':''}>Выбрать перевод (рус)</option>
-        <option value="choose_jp"${vMode==='choose_jp'?' selected':''}>Выбрать слово (яп)</option>
-        <option value="type"${vMode==='type'?' selected':''}>Напечатать ответ</option></select></div>`;
-      html+=`<label class="toggle"><input type="checkbox" id="tFuri" ${vFuri?'checked':''}> Фуригана (над кандзи)</label>`;
+        <option value="choose_ru"${vMode==='choose_ru'||vMode==='type'&&variant==='audio'?' selected':''}>Выбрать перевод (рус)</option>
+        <option value="choose_jp"${vMode==='choose_jp'?' selected':''}>Выбрать кандзи/слово</option>
+        ${typeOption}</select></div>`;
+      if(variant!=='audio') html+=`<label class="toggle"><input type="checkbox" id="tFuri" ${vFuri?'checked':''}> Фуригана (над кандзи)</label>`;
       html+=countTimeRows();
       html+=`<button class="btn primary" id="testStart" style="width:100%">Начать тест</button>`;
     }
@@ -96,15 +99,20 @@ const Test = (() => {
   function makeQuestions(list,count){
     const items=shuffle(list).slice(0,count);
     return items.map(it=>{ let prompt,correctKey,options;
-      if(vMode==='choose_jp'){ prompt=esc(ruv(it)); correctKey=jpPlain(it); options=shuffle([it,...distractors(it)]).map(x=>({key:jpPlain(x),html:jpHtml(x)})); }
+      if(variant==='audio'){
+        prompt=`<div class="audio-prompt">${WordAudio.button(audioText(it),'Прослушать',audioSrc(it))}</div>`;
+        if(vMode==='choose_jp'){ correctKey=jpPlain(it); options=shuffle([it,...distractors(it)]).map(x=>({key:jpPlain(x),html:jpHtml(x)})); }
+        else { correctKey=ruv(it); options=shuffle([it,...distractors(it)]).map(x=>({key:ruv(x),html:esc(ruv(x))})); }
+      }
+      else if(vMode==='choose_jp'){ prompt=esc(ruv(it)); correctKey=jpPlain(it); options=shuffle([it,...distractors(it)]).map(x=>({key:jpPlain(x),html:jpHtml(x)})); }
       else { prompt=jpHtml(it); correctKey=ruv(it); options=shuffle([it,...distractors(it)]).map(x=>({key:ruv(x),html:esc(ruv(x))})); }
       return { it, prompt, correctKey, options }; });
   }
   function start(){
     if(variant==='jlpt'){ JLPT.start(vJlpt, vTime); return; }
-    vFuri=$('tFuri')?$('tFuri').checked:vFuri; vMode=$('tMode')?$('tMode').value:vMode; vCount=$('tCount')?+$('tCount').value:vCount; vTime=$('tTime')?+$('tTime').value:vTime;
+    vFuri=$('tFuri')?$('tFuri').checked:vFuri; vMode=$('tMode')?$('tMode').value:vMode; if(variant==='audio'&&vMode==='type') vMode='choose_ru'; vCount=$('tCount')?+$('tCount').value:vCount; vTime=$('tTime')?+$('tTime').value:vTime;
     pool=buildPool();
-    const vn={words:'Слова',kanji:'Кандзи',grammar:'Грамматика'}[variant];
+    const vn={words:'Слова',kanji:'Кандзи',grammar:'Грамматика',audio:'Аудио'}[variant];
     label=vn+(vRecent?' · недавние':'')+(vLess.size?' · разделов: '+vLess.size:'');
     if(pool.length<4){ $('testSetup').style.display='none'; $('testArea').innerHTML=card(`<div class="empty">Недостаточно карточек для теста (нужно ≥4). <button class="btn" id="bk">Назад</button></div>`); $('bk').onclick=backToSetup; return; }
     qs=makeQuestions(pool,Math.min(vCount,pool.length)); idx=0; score=0; answers=[];
@@ -123,6 +131,7 @@ const Test = (() => {
     if(vMode==='type') body=`<div class="q-prompt">${q.prompt}</div><input id="typeAns" class="q-input" type="text" autocomplete="off" placeholder="Ответ (рус)…"><button class="btn primary" id="typeSubmit" style="width:100%;margin-top:12px">Проверить</button><div id="qFb"></div>`;
     else body=`<div class="q-prompt">${q.prompt}</div><div class="q-opts">${q.options.map(o=>`<button class="q-opt" data-o="${esc(o.key)}">${o.html}</button>`).join('')}</div><div id="qFb"></div>`;
     $('testArea').innerHTML=head+card(body);
+    if(variant==='audio') setTimeout(()=>WordAudio.speak(audioText(q.it), audioSrc(q.it)),120);
     if(vMode==='type'){ const inp=$('typeAns'); inp.focus(); const go=()=>checkType(inp.value,q); $('typeSubmit').onclick=go; inp.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }); }
     else $('testArea').querySelector('.q-opts').onclick=e=>{ const b=e.target.closest('[data-o]'); if(b) choose(b.dataset.o,q,b); };
   }

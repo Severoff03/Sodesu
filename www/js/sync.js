@@ -62,22 +62,24 @@ const Sync = (() => {
         kana:findCol(['kana','кана','reading','чтение','furigana','reading_kana']),
         ru:findCol(['translation_ru','translation','перевод','ru','russian','meaning','значение']),
         en:findCol(['translation_en','english','en','meaning_en']),
-        pattern:findCol(['pattern','шаблон','template'])
-      } : { type:0, group:1, kanji:2, kana:3, ru:4, en:-1, pattern:5 };
+        pattern:findCol(['pattern','шаблон','template']),
+        pitch:findCol(['pitch','pitch_accent','tone','тон','акцент']),
+        audio:findCol(['audio','audio_url','sound','звук','аудио'])
+      } : { type:0, group:1, kanji:2, kana:3, ru:4, en:-1, pattern:5, pitch:6, audio:7 };
       const get=(r,i)=> (i>=0 && r[i]!=null) ? (''+r[i]).trim() : '';
       const libId=Store.addCustomLib(name||'Импорт', 'lessons');
       const gmap={}; let gn=0, added=0;
       for(let i=hasHeader?1:0;i<rows.length;i++){ const r=rows[i]; if(!r) continue;
         const type=get(r,C.type).toLowerCase();
         const groupName=get(r,C.group)||'1';
-        const kanji=get(r,C.kanji), kana=get(r,C.kana), ru=get(r,C.ru), en=get(r,C.en), pat=get(r,C.pattern);
+        const kanji=get(r,C.kanji), kana=get(r,C.kana), ru=get(r,C.ru), en=get(r,C.en), pat=get(r,C.pattern), pitch=get(r,C.pitch), audio=get(r,C.audio);
         const tr = ru||en; // перевод: русский, иначе английский
         if(!kanji&&!kana&&!tr) continue;
         if(!(groupName in gmap)){ gmap[groupName]=++gn; }
         const g=gmap[groupName];
         if(type==='kanji'||type==='кандзи'){ if(kanji&&tr){ Store.addCustomItem(libId,'kanji',{c:kanji,m:tr},g,groupName); added++; } }
         else if(type==='grammar'||type==='грамматика'){ if(kanji&&tr){ Store.addCustomItem(libId,'grammar',{t:kanji,p:pat,m:tr},g,groupName); added++; } }
-        else { if((kana||kanji)&&tr){ Store.addCustomItem(libId,'words',{j:kanji,k:kana,r:tr,e:(ru?en:'')},g,groupName); added++; } }
+        else { if((kana||kanji)&&tr){ Store.addCustomItem(libId,'words',{j:kanji,k:kana,r:tr,e:(ru?en:''),pa:pitch,a:audio},g,groupName); added++; } }
       }
       if(!added){ Store.removeCustomLib(libId); return false; }
       return true;

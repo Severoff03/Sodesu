@@ -20,7 +20,7 @@ const App = (() => {
     (Store.customLibs()||[]).forEach(lib=>{
       D.meta.libraries.push({id:lib.id,name:lib.name,kind:lib.kind,custom:true});
       D.meta.lessonNames[lib.id]=lib.groups||{};
-      (lib.items.words||[]).forEach((x,ci)=>{ const id=D.words.length; D.words.push({k:x.k,j:x.j||'',e:x.e||'',r:x.r,l:x.l||1,lib:lib.id,id,uid:lib.id+'w'+id,clib:lib.id,ctype:'words',ci}); });
+      (lib.items.words||[]).forEach((x,ci)=>{ const id=D.words.length; D.words.push({k:x.k,j:x.j||'',e:x.e||'',r:x.r,a:x.a||x.audio||'',pa:x.pa||x.pitch||'',l:x.l||1,lib:lib.id,id,uid:lib.id+'w'+id,clib:lib.id,ctype:'words',ci}); });
       (lib.items.kanji||[]).forEach((x,ci)=>{ const id=D.kanji.length; D.kanji.push({c:x.c,m:x.m||'',l:x.l||1,lib:lib.id,freq:0,ex:[],id,uid:lib.id+'k'+id,clib:lib.id,ctype:'kanji',ci}); });
       (lib.items.grammar||[]).forEach((x,ci)=>{ const id=D.grammar.length; D.grammar.push({t:x.t,p:x.p||'',m:x.m||'',d:x.d||x.m||'',l:x.l||1,lib:lib.id,id,uid:lib.id+'g'+id,clib:lib.id,ctype:'grammar',ci}); });
     });
@@ -124,6 +124,7 @@ const App = (() => {
     if($('gramCommentSel')) $('gramCommentSel').value = s.grammarComment==null?'auto':(s.grammarComment?'on':'off');
     if($('bgFit')) $('bgFit').checked = s.bgFit==='contain';
     if($('studyFuriSet')) $('studyFuriSet').checked = !!s.studyFuri;
+    if($('studyAudioSet')) $('studyAudioSet').checked = s.studyAudioButton!==false;
     if($('cramModeSet')) $('cramModeSet').checked = s.cramMode!==false;
     buildLibs(); buildSrcRows(); buildYuru();
     $('aboutTxt').innerHTML=`<b>そうです</b> · версия <b>${VERSION}</b><br>Кандзи, слова и грамматика по Genki I & II + материалы.<br>Разработчик: <b>Mothman</b>.`;
@@ -140,6 +141,7 @@ const App = (() => {
     if($('bgReset')) $('bgReset').onclick=()=>{ Store.setBg(Store.settings().theme,null); applyTheme(Store.settings().theme); };
     if($('bgFit')) $('bgFit').addEventListener('change',e=>{ Store.setSetting('bgFit', e.target.checked?'contain':'cover'); applyUserBg(Store.settings().theme); document.getElementById('bgLayer')&&document.getElementById('bgLayer').classList.toggle('contain', e.target.checked); });
     if($('studyFuriSet')) $('studyFuriSet').addEventListener('change',e=>Store.setSetting('studyFuri',e.target.checked));
+    if($('studyAudioSet')) $('studyAudioSet').addEventListener('change',e=>{ Store.setSetting('studyAudioButton',e.target.checked); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('advancedBtn')) $('advancedBtn').onclick=()=>{ const box=$('advancedSettings'); if(!box)return; const open=!box.classList.contains('open'); box.classList.toggle('open',open); $('advancedBtn').textContent=open?'Скрыть расширенную кастомизацию':'Открыть расширенную кастомизацию'; Sound.play('tap'); };
     if($('cramModeSet')) $('cramModeSet').addEventListener('change',e=>{ Store.setSetting('cramMode',e.target.checked); flame(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('supportBtn')) $('supportBtn').onclick=()=>openExternal('https://github.com/Severoff03/sodesu/issues/new');
@@ -302,7 +304,8 @@ const App = (() => {
       <button class="btn ghost" id="leClose" style="width:100%;margin-top:8px">Закрыть</button>`;
     $('modal').dataset.stats=''; $('modal').classList.add('open');
     const delBtn=()=>{ const cur=$('leLib').value; $('leDel').style.display=(cur && cur!=='__new')?'':'none'; };
-    const flds=()=>{ const a=ph[$('leType').value]||ph.words; $('leFields').innerHTML=`<input id="leF1" class="q-input" placeholder="${a[0]}" style="margin-bottom:8px">`+(a[1]?`<input id="leF2" class="q-input" placeholder="${a[1]}" style="margin-bottom:8px">`:'')+(a[2]?`<input id="leF3" class="q-input" placeholder="${a[2]}" style="margin-bottom:8px">`:''); };
+    const bindAudioFile=(fileId,inputId)=>{ const f=$(fileId), inp=$(inputId); if(!f||!inp) return; f.onchange=e=>{ const file=e.target.files&&e.target.files[0]; if(!file) return; const r=new FileReader(); r.onload=()=>{ inp.value=String(r.result||''); toast('Аудио добавлено'); }; r.readAsDataURL(file); }; };
+    const flds=()=>{ const a=ph[$('leType').value]||ph.words; const wordExtra=$('leType').value==='words'?`<input id="lePitch" class="q-input" placeholder="Тон (0, 1, 2 или 0,2)" style="margin-bottom:8px"><input id="leAudio" class="q-input" placeholder="Аудио URL / data: / assets/..." style="margin-bottom:8px"><label class="btn ghost" style="display:block;text-align:center;margin-bottom:8px">Выбрать аудиофайл<input type="file" id="leAudioFile" accept="audio/*" style="display:none"></label>`:''; $('leFields').innerHTML=`<input id="leF1" class="q-input" placeholder="${a[0]}" style="margin-bottom:8px">`+(a[1]?`<input id="leF2" class="q-input" placeholder="${a[1]}" style="margin-bottom:8px">`:'')+(a[2]?`<input id="leF3" class="q-input" placeholder="${a[2]}" style="margin-bottom:8px">`:'')+wordExtra; bindAudioFile('leAudioFile','leAudio'); };
     const nb=()=>{ $('leNewBox').style.display=$('leLib').value==='__new'?'':'none'; };
     // Список уже созданных тем/занятий выбранной библиотеки + «новая».
     const pg=()=>{ const id=$('leLib').value; const lib=id!=='__new'?Store.getCustomLib(id):null;
@@ -321,7 +324,8 @@ const App = (() => {
       if(gv && gv!=='__newg' && lib.groups[gv]){ g=+gv; gname=lib.groups[gv]; }
       else { gname=$('leGroupName').value.trim()||'1'; g=null; for(const k in lib.groups){ if(lib.groups[k]===gname) g=+k; } if(g===null){ const ns=Object.keys(lib.groups).map(Number); g=ns.length?Math.max(...ns)+1:1; } }
       const t=$('leType').value, f1=($('leF1')||{}).value||'', f2=($('leF2')||{}).value||'', f3=($('leF3')||{}).value||'';
-      if(t==='words'){ if(!f2||!f3){ toast('Заполни кану и перевод'); return; } Store.addCustomItem(libId,'words',{j:f1.trim(),k:f2.trim(),r:f3.trim(),e:''},g,gname); }
+      const pa=(($('lePitch')||{}).value||'').trim(), a=(($('leAudio')||{}).value||'').trim();
+      if(t==='words'){ if(!f2||!f3){ toast('Заполни кану и перевод'); return; } Store.addCustomItem(libId,'words',{j:f1.trim(),k:f2.trim(),r:f3.trim(),e:'',pa,a},g,gname); }
       else if(t==='kanji'){ if(!f1||!f2){ toast('Заполни кандзи и значение'); return; } Store.addCustomItem(libId,'kanji',{c:f1.trim(),m:f2.trim()},g,gname); }
       else { if(!f1||!f3){ toast('Заполни конструкцию и значение'); return; } Store.addCustomItem(libId,'grammar',{t:f1.trim(),p:f2.trim(),m:f3.trim()},g,gname); }
       mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); toast('Добавлено ✓'); openLibEditor(libId, String(g)); };
@@ -345,16 +349,17 @@ const App = (() => {
     const it=findByUid(uid); if(!isCustomItem(it)){ toast('Это элемент встроенной библиотеки'); return; }
     const type=it.ctype, lib=Store.getCustomLib(it.clib); if(!lib){ toast('Библиотека не найдена'); return; }
     const src=(lib.items[type]||[])[it.ci]; if(!src){ toast('Элемент не найден'); return; }
-    const fields = type==='words'?[['j','Кандзи (опц.)',src.j],['k','Кана',src.k],['r','Перевод',src.r],['e','English (опц.)',src.e]]
+    const fields = type==='words'?[['j','Кандзи (опц.)',src.j],['k','Кана',src.k],['r','Перевод',src.r],['e','English (опц.)',src.e],['pa','Тон (0, 1, 2 или 0,2)',src.pa||src.pitch],['a','Аудио URL / data: / assets/...',src.a||src.audio]]
       : type==='kanji'?[['c','Кандзи',src.c],['m','Значение',src.m]]
       : [['t','Конструкция',src.t],['p','Шаблон (опц.)',src.p],['m','Значение',src.m]];
     const o=document.createElement('div'); o.className='onboard';
     o.innerHTML=`<div class="ob-card"><div class="ob-h">Редактировать (${esc(lib.name)})</div>`+
-      fields.map(([k,ph,v])=>`<div class="field"><label>${esc(ph)}</label><input class="q-input" data-f="${k}" value="${esc(v||'')}"></div>`).join('')+
+      fields.map(([k,ph,v])=>`<div class="field"><label>${esc(ph)}</label><input class="q-input" data-f="${k}" value="${attr(v||'')}">${k==='a'?'<label class="btn ghost" style="display:block;text-align:center;margin-top:8px">Выбрать аудиофайл<input type="file" id="edAudioFile" accept="audio/*" style="display:none"></label>':''}</div>`).join('')+
       `<div style="display:flex;gap:10px;margin-top:8px"><button class="btn ghost" id="edCancel" style="flex:1">Отмена</button><button class="btn primary" id="edSave" style="flex:1">Сохранить</button></div>
        <button class="btn danger" id="edDel" style="width:100%;margin-top:8px">🗑 Удалить элемент</button></div>`;
     document.body.appendChild(o); const close=()=>o.remove(); o.addEventListener('click',e=>{ if(e.target===o) close(); });
     $('modal')&&$('modal').classList.remove('open');
+    const af=o.querySelector('#edAudioFile'); if(af) af.onchange=e=>{ const file=e.target.files&&e.target.files[0]; if(!file) return; const r=new FileReader(); r.onload=()=>{ const inp=o.querySelector('[data-f="a"]'); if(inp) inp.value=String(r.result||''); toast('Аудио добавлено'); }; r.readAsDataURL(file); };
     o.querySelector('#edCancel').onclick=close;
     o.querySelector('#edSave').onclick=()=>{ const obj={}; o.querySelectorAll('[data-f]').forEach(inp=>obj[inp.dataset.f]=inp.value.trim());
       const ok = type==='words'?(obj.k&&obj.r) : type==='kanji'?(obj.c&&obj.m) : (obj.t&&obj.m);
@@ -362,8 +367,8 @@ const App = (() => {
       Store.updateCustomItem(it.clib,type,it.ci,obj); refreshAfterCustom(); toast('Сохранено ✓'); close(); };
     o.querySelector('#edDel').onclick=()=>{ confirmBox('Удалить элемент?','Этот элемент будет удалён из библиотеки безвозвратно.','Удалить',()=>{ Store.removeCustomItem(it.clib,type,it.ci); refreshAfterCustom(); toast('Удалено'); close(); }); };
   }
-  function libToCsv(lib){ const rows=[['type','group','kanji','kana','translation','pattern']];
-    lib.items.words.forEach(x=>rows.push(['word',lib.groups[x.l]||x.l,x.j||'',x.k||'',x.r||'',''])); lib.items.kanji.forEach(x=>rows.push(['kanji',lib.groups[x.l]||x.l,x.c||'','',x.m||'',''])); lib.items.grammar.forEach(x=>rows.push(['grammar',lib.groups[x.l]||x.l,x.t||'','',x.m||'',x.p||'']));
+  function libToCsv(lib){ const rows=[['type','group','kanji','kana','translation','pattern','pitch','audio']];
+    lib.items.words.forEach(x=>rows.push(['word',lib.groups[x.l]||x.l,x.j||'',x.k||'',x.r||'','',x.pa||x.pitch||'',x.a||x.audio||''])); lib.items.kanji.forEach(x=>rows.push(['kanji',lib.groups[x.l]||x.l,x.c||'','',x.m||'','',''])); lib.items.grammar.forEach(x=>rows.push(['grammar',lib.groups[x.l]||x.l,x.t||'','',x.m||'',x.p||'','','']));
     return rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); }
   function init(){
     baseKanji=D.kanji.map(k=>({...k,uid:'k'+k.id}));
@@ -387,6 +392,7 @@ const App = (() => {
     safe(buildThemes); safe(Test.init); safe(bindSettings); safe(Sync.init); safe(home); safe(flame); safe(onboard); safe(whatsNew); safe(checkUpdate);
   }
   function esc(s){ return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+  function attr(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded',init);
   return { go, editItem };
 })();

@@ -10,12 +10,18 @@ const Study = (() => {
   const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const furi=()=>Store.settings().studyFuri;
   function ruby(j,k){ return (furi()&&j&&/[一-鿿]/.test(j))?`<ruby>${esc(j)}<rt>${esc(k)}</rt></ruby>`:esc(j||k); }
+  function wordFront(w){
+    const text=w.k||w.j;
+    const btn=Store.settings().studyAudioButton!==false ? WordAudio.button(text, 'Прослушать', w.a||w.audio) : '';
+    return `<div class="word word-audio"><span>${ruby(w.j,w.k)}</span>${btn}</div>
+      <div class="study-pitch">${Pitch.render(w.k||w.j, w.j||w.k, w.pa||w.pitch)}</div>`;
+  }
   const T=(m)=>{ if(window.toast) toast(m); };
 
   const REND = {
     kanji:{ front:k=>`<div class="kanji">${esc(k.c)}</div>`, tag:k=>LU.lessonLabel(k.lib,k.l),
       back:k=>(k.ex||[]).map(i=>D.vocab[i]).filter(v=>v&&v.j&&v.j.includes(k.c)).slice(0,5).map(rowEx).join('') },
-    words:{ front:w=>`<div class="word">${ruby(w.j,w.k)}</div>`, tag:w=>LU.lessonLabel(w.lib,w.l),
+    words:{ front:w=>wordFront(w), tag:w=>LU.lessonLabel(w.lib,w.l),
       back:w=>`${w.j?`<div class="ex"><span class="w">${esc(w.j)}</span><span class="rd">${esc(w.k)}</span></div>`:''}
         <div class="ex"><span class="w" style="min-width:auto">${LU.ml(w.r)}</span></div>
         <div class="ex"><span class="w" style="min-width:auto;color:var(--muted)">${LU.ml(w.e)}</span></div>` },

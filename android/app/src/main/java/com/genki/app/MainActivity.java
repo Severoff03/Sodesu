@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
 import android.view.View;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
@@ -27,6 +28,7 @@ import androidx.work.WorkManager;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -37,6 +39,8 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     private WebView web;
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
 
     // Содержимое файла, ожидающее выбора места сохранения (Storage Access Framework).
     private String pendingContent = null;
@@ -110,6 +114,14 @@ public class MainActivity extends AppCompatActivity {
 
         web.loadUrl("file:///android_asset/index.html");
 
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int result = tts.setLanguage(Locale.JAPAN);
+                ttsReady = result != TextToSpeech.LANG_MISSING_DATA
+                        && result != TextToSpeech.LANG_NOT_SUPPORTED;
+            }
+        });
+
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
                 if (web.canGoBack()) web.goBack();
@@ -136,6 +148,25 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void openUrl(String url){
             act.openExternal(url);
         }
+        /** Озвучка японского текста через системный TTS. */
+        @JavascriptInterface public void speakJa(String text){
+            act.speakJa(text);
+        }
+    }
+
+    void speakJa(String text){
+        if (text == null || text.trim().isEmpty()) return;
+        runOnUiThread(() -> {
+            if (tts == null || !ttsReady) {
+                Toast.makeText(this, "Озвучка недоступна", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= 21) {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ja-word");
+            } else {
+                tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+            }
+        });
     }
 
     void openExternal(String url){
@@ -196,5 +227,14 @@ public class MainActivity extends AppCompatActivity {
     /** Ежедневные уведомления отключены: отменяем воркер (в т.ч. на уже установленных). */
     private void scheduleDaily(){
         try { WorkManager.getInstance(this).cancelUniqueWork("souda_daily"); } catch (Exception ignored) {}
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (tts != null) {
+            tts.stop();
+            tts.shutdown();
+        }
+        super.onDestroy();
     }
 }

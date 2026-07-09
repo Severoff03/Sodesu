@@ -127,6 +127,7 @@ const App = (() => {
     if($('studyAudioSet')) $('studyAudioSet').checked = s.studyAudioButton!==false;
     if($('pitchAccentSet')) $('pitchAccentSet').checked = s.pitchAccent!==false;
     if($('cramModeSet')) $('cramModeSet').checked = s.cramMode!==false;
+    if($('cramFuriSet')) $('cramFuriSet').checked = !!s.cramFuri;
     buildLibs(); buildSrcRows(); buildYuru();
     $('aboutTxt').innerHTML=`<b>そうです</b> · версия <b>${VERSION}</b><br>Кандзи, слова и грамматика по Genki I & II + материалы.<br>Разработчик: <b>Mothman</b>.`;
   }
@@ -146,6 +147,7 @@ const App = (() => {
     if($('pitchAccentSet')) $('pitchAccentSet').addEventListener('change',e=>{ Store.setSetting('pitchAccent',e.target.checked); refreshSection(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('advancedBtn')) $('advancedBtn').onclick=()=>{ const box=$('advancedSettings'); if(!box)return; const open=!box.classList.contains('open'); box.classList.toggle('open',open); $('advancedBtn').textContent=open?'Скрыть расширенную кастомизацию':'Открыть расширенную кастомизацию'; Sound.play('tap'); };
     if($('cramModeSet')) $('cramModeSet').addEventListener('change',e=>{ Store.setSetting('cramMode',e.target.checked); flame(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
+    if($('cramFuriSet')) $('cramFuriSet').addEventListener('change',e=>{ Store.setSetting('cramFuri',e.target.checked); if($('view-study')&&$('view-study').classList.contains('active')) Study.startCram(); });
     if($('supportBtn')) $('supportBtn').onclick=()=>openExternal('https://github.com/Severoff03/sodesu/issues/new');
     if($('donateBtn')) $('donateBtn').onclick=()=>openExternal('https://boosty.to/m0thman/donate');
     if($('libsAll')) $('libsAll').onclick=()=>{ const on=!D.meta.libraries.every(l=>Store.libOn(l.id)); D.meta.libraries.forEach(l=>Store.setLib(l.id,on)); buildLibs(); home(); Sound.play('tap'); };

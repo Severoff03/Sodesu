@@ -8,7 +8,7 @@ const Study = (() => {
   let deck='kanji', mode='normal', q=[], cur=null, revealed=false, noKnow=false;
   let onChange=()=>{}; function setOnChange(fn){ onChange=fn; } function setDeck(d){ deck=d; }
   const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-  const furi=()=>Store.settings().studyFuri;
+  const furi=()=>mode==='cram' ? !!Store.settings().cramFuri : !!Store.settings().studyFuri;
   function ruby(j,k){ return (furi()&&j&&/[一-鿿]/.test(j))?`<ruby>${esc(j)}<rt>${esc(k)}</rt></ruby>`:esc(j||k); }
   function wordFront(w){
     const text=w.k||w.j;

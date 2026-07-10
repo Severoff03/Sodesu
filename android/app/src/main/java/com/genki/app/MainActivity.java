@@ -170,6 +170,10 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface public void speakJa(String text){
             act.speakJa(text);
         }
+        /** Открыть установку системных голосов TTS. */
+        @JavascriptInterface public void installTts(){
+            act.installTts();
+        }
     }
 
     void speakJa(String text){
@@ -233,10 +237,34 @@ public class MainActivity extends AppCompatActivity {
 
     private void offerInstallTts(){
         Toast.makeText(this, "Нужен японский TTS или интернет", Toast.LENGTH_SHORT).show();
+        installTts();
+    }
+
+    void installTts(){
+        runOnUiThread(() -> {
+            if (openTtsInstall()) return;
+            if (openTtsSettings()) return;
+            Toast.makeText(this, "Не удалось открыть TTS", Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private boolean openTtsInstall(){
         try {
             Intent i = new Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA);
             startActivity(i);
+            return true;
         } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean openTtsSettings(){
+        try {
+            Intent i = new Intent("com.android.settings.TTS_SETTINGS");
+            startActivity(i);
+            return true;
+        } catch (Exception ignored) {
+            return false;
         }
     }
 

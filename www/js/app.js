@@ -150,6 +150,15 @@ const App = (() => {
     if($('cramFuriSet')) $('cramFuriSet').addEventListener('change',e=>{ Store.setSetting('cramFuri',e.target.checked); if($('view-study')&&$('view-study').classList.contains('active')) Study.startCram(); });
     if($('supportBtn')) $('supportBtn').onclick=()=>openExternal('https://github.com/Severoff03/sodesu/issues/new');
     if($('donateBtn')) $('donateBtn').onclick=()=>openExternal('https://boosty.to/m0thman/donate');
+    if($('ttsInstallBtn')) $('ttsInstallBtn').onclick=()=>{
+      try{
+        if(window.Android&&typeof window.Android.installTts==='function'){
+          window.Android.installTts();
+          return;
+        }
+      }catch(e){}
+      toast('Доступно в Android-приложении');
+    };
     if($('libsAll')) $('libsAll').onclick=()=>{ const on=!D.meta.libraries.every(l=>Store.libOn(l.id)); D.meta.libraries.forEach(l=>Store.setLib(l.id,on)); buildLibs(); home(); Sound.play('tap'); };
     if($('srcRows')) $('srcRows').onclick=e=>{ const all=e.target.closest('[data-srcall]'); if(all){ const s=all.dataset.srcall; const on=!D.meta.libraries.every(l=>Store.srcOn(s,l.id)); D.meta.libraries.forEach(l=>Store.setSrc(s,l.id,on)); buildSrcRows(); refreshSection(s); Sound.play('tap'); return; }
       const p=e.target.closest('[data-src]'); if(p){ const s=p.dataset.src,lib=p.dataset.lib; Store.setSrc(s,lib,!Store.srcOn(s,lib)); buildSrcRows(); refreshSection(s); } };

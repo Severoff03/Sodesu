@@ -148,6 +148,10 @@ main{flex:1;padding:18px 16px calc(var(--nav-h) + 26px);}
 .entry{padding:13px 15px;margin-bottom:9px;display:flex;gap:14px;align-items:flex-start}
 .entry .jp{font-family:var(--jp);font-size:23px;font-weight:600;min-width:90px}
 .jp-line,.dict-sheet-head{display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.entry .dict-jp{position:relative;min-width:118px;padding-right:34px;text-align:center}
+.dict-jp-stack{display:inline-flex;flex-direction:column;align-items:center;line-height:1.12}
+.dict-jp-main{display:block}
+.dict-audio-side{position:absolute;right:0;top:50%;transform:translateY(-50%)}
 .entry .jp .kana{display:block;font-size:13px;color:var(--accent);font-weight:500}
 .entry .jp .kana.only{margin-top:2px}
 .entry .mean{flex:1}.entry .mean .en{font-size:15px}.entry .mean .ru{font-size:13px;color:var(--muted)}
@@ -158,6 +162,8 @@ main{flex:1;padding:18px 16px calc(var(--nav-h) + 26px);}
 .dict-meaning small{display:block;color:var(--muted2);font-size:12px;margin-top:2px}
 .entry .lz{font-size:11px;color:var(--muted2);white-space:nowrap;text-align:right}
 .entry.known-entry{border-color:color-mix(in srgb,var(--green) 55%,var(--line));background:color-mix(in srgb,var(--green) 9%,var(--panel))}
+.entry.cram-entry{border-color:color-mix(in srgb,#ff8a1f 62%,var(--line));background:color-mix(in srgb,#ff8a1f 13%,var(--panel))}
+.entry.cram-entry .jp,.entry.cram-entry .ru-main{color:#ffad5c!important}
 .kbadge{display:inline-block;margin-top:4px;font-size:10px;color:#fff;background:var(--green);padding:2px 7px;border-radius:999px}
 .toggle{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);margin-bottom:12px;cursor:pointer}
 .toggle input{appearance:none;width:42px;height:24px;border-radius:999px;background:var(--panel2);border:1px solid var(--line);position:relative;cursor:pointer;transition:background .2s;flex:none}

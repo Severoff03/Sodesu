@@ -123,6 +123,7 @@ const App = (() => {
     if($('cnLbl')) $('cnLbl').textContent=(s.cramNeed!=null?s.cramNeed:3);
     if($('gramCommentSel')) $('gramCommentSel').value = s.grammarComment==null?'auto':(s.grammarComment?'on':'off');
     if($('bgFit')) $('bgFit').checked = s.bgFit==='contain';
+    if($('dictFuriSet')) $('dictFuriSet').checked = s.dictFuri!==false;
     if($('studyFuriSet')) $('studyFuriSet').checked = !!s.studyFuri;
     if($('studyAudioSet')) $('studyAudioSet').checked = s.studyAudioButton!==false;
     if($('pitchAccentSet')) $('pitchAccentSet').checked = s.pitchAccent!==false;
@@ -142,6 +143,7 @@ const App = (() => {
     if($('bgFile')) $('bgFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f)return; const r=new FileReader(); r.onload=()=>{ Store.setBg(Store.settings().theme,r.result); applyTheme(Store.settings().theme); alert('Фон установлен для текущей темы'); }; r.readAsDataURL(f); });
     if($('bgReset')) $('bgReset').onclick=()=>{ Store.setBg(Store.settings().theme,null); applyTheme(Store.settings().theme); };
     if($('bgFit')) $('bgFit').addEventListener('change',e=>{ Store.setSetting('bgFit', e.target.checked?'contain':'cover'); applyUserBg(Store.settings().theme); document.getElementById('bgLayer')&&document.getElementById('bgLayer').classList.toggle('contain', e.target.checked); });
+    if($('dictFuriSet')) $('dictFuriSet').addEventListener('change',e=>{ Store.setSetting('dictFuri',e.target.checked); Dict.refresh(); });
     if($('studyFuriSet')) $('studyFuriSet').addEventListener('change',e=>Store.setSetting('studyFuri',e.target.checked));
     if($('studyAudioSet')) $('studyAudioSet').addEventListener('change',e=>{ Store.setSetting('studyAudioButton',e.target.checked); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });
     if($('pitchAccentSet')) $('pitchAccentSet').addEventListener('change',e=>{ Store.setSetting('pitchAccent',e.target.checked); refreshSection(); if($('view-study')&&$('view-study').classList.contains('active')) Study.start(); });

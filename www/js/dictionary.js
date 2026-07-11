@@ -25,6 +25,7 @@ const Dict = (() => {
     return 'new';
   }
   function groupFav(g){ return groupItems(g).some(v=>Store.favHas(uid(v))); }
+  function groupCram(g){ return groupItems(g).some(v=>Store.isCram(uid(v))); }
   function groupArchived(g){ const xs=groupItems(g); return xs.length&&xs.every(v=>Store.isArchived(uid(v))); }
   function base(){ return D.words.filter(v=>Store.srcOn('mat',v.lib)); }
   function grouped(list){
@@ -65,18 +66,19 @@ const Dict = (() => {
   }
   function jpBlock(v, sheet){
     const word=v.j||v.k, kana=v.k||word, speak=kana||word;
-    const pitch=Pitch.render(kana, word, v.pa||v.pitch);
+    const showFuri=sheet || Store.settings().dictFuri!==false;
+    const pitch=showFuri ? Pitch.render(kana, word, v.pa||v.pitch) : '';
     const btn=WordAudio.button(speak, 'Прослушать', v.a||v.audio);
     if(sheet) return `<div class="dict-sheet-head"><div class="big-kanji" style="font-size:46px">${LU.esc(word)}</div>${btn}</div>
       <div class="sub">${pitch}</div>`;
-    if(word===kana) return `<div class="jp"><div class="jp-line"><span>${pitch}</span>${btn}</div></div>`;
-    return `<div class="jp"><div class="jp-line"><span>${LU.esc(word)}</span>${btn}</div><span class="kana">${pitch}</span></div>`;
+    if(word===kana) return `<div class="jp dict-jp"><div class="dict-jp-stack"><div class="dict-jp-main">${showFuri?pitch:LU.esc(word)}</div></div><div class="dict-audio-side">${btn}</div></div>`;
+    return `<div class="jp dict-jp"><div class="dict-jp-stack"><div class="dict-jp-main">${LU.esc(word)}</div>${pitch?`<span class="kana">${pitch}</span>`:''}</div><div class="dict-audio-side">${btn}</div></div>`;
   }
   function entryHtml(v){
-    const id=uid(v); const known=groupStatus(v)==='known'; const fav=groupFav(v); const hasJ=!!v.j; const arch=groupArchived(v);
+    const id=uid(v); const known=groupStatus(v)==='known'; const fav=groupFav(v); const cram=groupCram(v); const arch=groupArchived(v);
     const src=unique(groupItems(v).map(x=>LU.libName(x.lib))).join(' · ');
     const meanings=groupItems(v).map(x=>`<div class="dict-meaning"><b>${LU.esc(LU.libName(x.lib))}</b><span>${LU.ml(x.r)}</span>${x.e?`<small>${LU.ml(x.e)}</small>`:''}</div>`).join('');
-    return `<div class="entry card${known?' known-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
+    return `<div class="entry card${known?' known-entry':''}${cram?' cram-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
       ${jpBlock(v)}
       <div class="mean">${meanings}</div>
       <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.esc(src)}</div>
@@ -178,6 +180,7 @@ const Dict = (() => {
       if(node){
         if(a==='known') node.classList.add('known-entry');
         if(a==='learn') node.classList.remove('known-entry','archived-entry');
+        if(a==='cram') node.classList.add('cram-entry');
         if(a==='archive') node.classList.add('archived-entry');
       }
       if(statusFilter!=='all'&&a!=='close'&&a!=='cram') render(); };

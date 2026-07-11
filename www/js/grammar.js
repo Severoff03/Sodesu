@@ -31,8 +31,8 @@ const Gram = (() => {
     const box=$('gramResults');
     if(!res.length){ box.innerHTML=`<div class="empty"><div class="big">📘</div>Ничего не найдено</div>`; return; }
     box.innerHTML=res.map(g=>{
-      const id=uid(g); const known=Store.status(id)==='known'; const fav=Store.favHas(id);
-      return `<div class="entry card${known?' known-entry':''}" data-uid="${id}" data-gid="${g.id}">
+      const id=uid(g); const known=Store.status(id)==='known'; const fav=Store.favHas(id); const cram=Store.isCram(id);
+      return `<div class="entry card${known?' known-entry':''}${cram?' cram-entry':''}" data-uid="${id}" data-gid="${g.id}">
         <div class="jp" style="min-width:108px">${LU.esc(g.t)}</div>
         <div class="mean"><div class="ru ru-main" style="color:var(--accent)">${LU.esc(g.p)}</div>${sc?`<div class="en">${LU.esc(g.m)}</div>`:''}</div>
         <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.lessonLabel(g.lib,g.l)}</div>
@@ -40,7 +40,7 @@ const Gram = (() => {
     }).join('');
   }
   function openDetail(gid){
-    const g=D.grammar.find(x=>x.id===gid); if(!g) return; const id=uid(g); const known=Store.status(id)==='known';
+    const g=D.grammar.find(x=>x.id===gid); if(!g) return; const id=uid(g); const known=Store.status(id)==='known'; const cramOn=Store.settings().cramMode!==false;
     $('sheet').innerHTML=`<div class="grip"></div>
       <div style="font-family:var(--jp);font-size:34px;font-weight:700;text-align:center;margin:4px 0 2px">${LU.esc(g.t)}</div>
       <div style="text-align:center;color:var(--accent);font-size:16px;margin-bottom:10px">${LU.esc(g.p)}</div>
@@ -48,11 +48,13 @@ const Gram = (() => {
       <div style="font-size:15px;line-height:1.55">${LU.esc(g.d||g.m)}</div>
       <div class="actions" style="margin-top:18px">
         <button class="btn ${known?'':'primary'}" id="gKnow">${known?'↩︎ Вернуть в учёбу':'✓ Знаю'}</button>
+        ${cramOn?'<button class="btn" id="gCram">🔥 Зазубрить</button>':''}
         ${g.clib?`<button class="btn" id="gEdit" style="grid-column:1/-1">✏️ Редактировать (своя библиотека)</button>`:''}
         <button class="btn ghost" id="gClose">Закрыть</button></div>`;
     $('modal').dataset.stats=''; $('modal').classList.add('open');
     $('gClose').onclick=()=>$('modal').classList.remove('open');
     if($('gEdit')) $('gEdit').onclick=()=>{ $('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(id); };
+    if($('gCram')) $('gCram').onclick=()=>{ Store.setCram(id,true); $('modal').classList.remove('open'); if(window.toast) toast('В «Зазубрить» 🔥'); render(); };
     $('gKnow').onclick=()=>{ if(known) Store.set(id,SRS.fresh()); else { Store.set(id,{...(Store.get(id)||SRS.fresh()),s:'known',due:0}); Sound.play('known'); } $('modal').classList.remove('open'); render(); };
   }
   function chips(wrap,arr,cur,attr,cb){ wrap.innerHTML=arr.map(([v,l])=>`<span class="pill${String(v)===String(cur)?' on':''}" data-${attr}="${v}">${l}</span>`).join(''); wrap.onclick=e=>{ const p=e.target.closest(`[data-${attr}]`); if(!p)return; cb(p.dataset[attr]); }; }

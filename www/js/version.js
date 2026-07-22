@@ -1,5 +1,5 @@
 window.SODESU_VERSION = Object.freeze({
-  code: 24,
-  name: '0.13.6',
-  label: '0.13.6 (debug)'
+  code: 25,
+  name: '0.13',
+  label: '0.13 (beta)'
 });

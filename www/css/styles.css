@@ -148,10 +148,10 @@ main{flex:1;padding:18px 16px calc(var(--nav-h) + 26px);}
 .entry{padding:13px 15px;margin-bottom:9px;display:flex;gap:14px;align-items:flex-start}
 .entry .jp{font-family:var(--jp);font-size:23px;font-weight:600;min-width:90px}
 .jp-line,.dict-sheet-head{display:inline-flex;align-items:center;justify-content:center;gap:8px}
-.entry .dict-jp{position:relative;min-width:118px;padding-right:34px;text-align:center}
+.entry .dict-jp{display:grid;grid-template-columns:minmax(0,1fr) 32px;gap:6px;align-items:center;min-width:128px;max-width:42%;padding-right:0;text-align:center}
 .dict-jp-stack{display:inline-flex;flex-direction:column;align-items:center;line-height:1.12}
-.dict-jp-main{display:block}
-.dict-audio-side{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.dict-jp-main{display:block;min-width:0;overflow-wrap:anywhere}
+.dict-audio-side{position:static;transform:none;display:flex;justify-content:flex-end}
 .entry .jp .kana{display:block;font-size:13px;color:var(--accent);font-weight:500}
 .entry .jp .kana.only{margin-top:2px}
 .entry .mean{flex:1}.entry .mean .en{font-size:15px}.entry .mean .ru{font-size:13px;color:var(--muted)}
@@ -515,6 +515,7 @@ body{ background:var(--bg) !important; }
 .speak-btn:active{transform:scale(.94)}
 .pitch{display:inline-flex;align-items:flex-end;gap:1px;font-family:var(--jp);line-height:1.1;color:var(--accent)}
 .pitch.plain{display:inline;color:var(--accent);border:0}
+.pitch.compact{font-size:.86em;gap:0}
 .pitch .mora{position:relative;display:inline-block;padding-top:7px;min-width:.8em;text-align:center}
 .pitch .mora::before{content:"";position:absolute;left:0;right:0;top:2px;border-top:2px solid currentColor}
 .pitch .mora.lo{transform:translateY(3px);color:var(--muted2)}

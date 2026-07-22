@@ -48,14 +48,15 @@ const Pitch = (() => {
     const ms = morae(kana);
     const vars = variants(word, kana, custom);
     if(!ms.length) return '';
+    if(vars.length > 1 || ms.length > 8 || /[\s・\/／()（）[\]{}<>«»"'.,;:!?！？]/.test(kana)) return `<span class="pitch plain">${esc(kana)}</span>`;
     if(!vars.length) return `<span class="pitch plain">${esc(kana)}</span>`;
     const accent = Number(vars[0]) || 0;
     const highs = pattern(ms.length, accent);
     const body = ms.map((m, i) => {
       return `<span class="mora ${highs[i] ? 'hi' : 'lo'}">${esc(m)}</span>`;
     }).join('');
-    const more = vars.length > 1 ? `<span class="pitch-var">+${vars.length - 1}</span>` : '';
-    return `<span class="pitch" title="Pitch accent: ${esc(String(vars.join(', ')))}">${body}${more}</span>`;
+    const compact = ms.length > 6 ? ' compact' : '';
+    return `<span class="pitch${compact}" title="Pitch accent: ${esc(String(vars.join(', ')))}">${body}</span>`;
   }
   return { render, variants };
 })();

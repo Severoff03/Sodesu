@@ -13,7 +13,7 @@ const Study = (() => {
   function wordFront(w){
     const text=w.k||w.j;
     const btn=Store.settings().studyAudioButton!==false ? `<div class="study-audio-corner">${WordAudio.button(text, 'Прослушать', w.a||w.audio)}</div>` : '';
-    const showPitch=mode!=='cram' || !!Store.settings().cramFuri;
+    const showPitch=furi() && Store.settings().pitchAccent!==false;
     const pitch=showPitch ? `<div class="study-pitch">${Pitch.render(w.k||w.j, w.j||w.k, w.pa||w.pitch)}</div>` : '';
     return `${btn}<div class="word">${ruby(w.j,w.k)}</div>
       ${pitch}`;

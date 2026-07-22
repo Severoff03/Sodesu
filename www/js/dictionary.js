@@ -14,6 +14,8 @@ const Dict = (() => {
   const groupId = key=>'wg:'+key;
   const groupItems = v=>v&&v._items?v._items:[v];
   const itemIds = v=>groupItems(v).map(uid);
+  const primaryItem = v=>groupItems(v).find(x=>Store.isCram(uid(x))) || groupItems(v)[0];
+  const primaryId = v=>{ const x=primaryItem(v); return x?uid(x):uid(v); };
   const unique = arr=>[...new Set(arr.filter(Boolean))];
   function statusOf(v){ const s=Store.status(uid(v)); return (s==='learning'||s==='review')?'learning':s; }
   function groupStatus(g){
@@ -76,12 +78,11 @@ const Dict = (() => {
   }
   function entryHtml(v){
     const id=uid(v); const known=groupStatus(v)==='known'; const fav=groupFav(v); const cram=groupCram(v); const arch=groupArchived(v);
-    const src=unique(groupItems(v).map(x=>LU.libName(x.lib))).join(' · ');
     const meanings=groupItems(v).map(x=>`<div class="dict-meaning"><b>${LU.esc(LU.libName(x.lib))}</b><span>${LU.ml(x.r)}</span>${x.e?`<small>${LU.ml(x.e)}</small>`:''}</div>`).join('');
     return `<div class="entry card${known?' known-entry':''}${cram?' cram-entry':''}${arch?' archived-entry':''}" data-uid="${id}">
       ${jpBlock(v)}
       <div class="mean">${meanings}</div>
-      <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span><br>${LU.esc(src)}</div>
+      <div class="lz"><span class="fav${fav?' on':''}" data-fav="${id}">${fav?'★':'☆'}</span></div>
     </div>`;
   }
   function updateMeta(){
@@ -172,7 +173,7 @@ const Dict = (() => {
       const ids=itemIds(v);
       if(a==='known'){ ids.forEach(x=>Store.set(x,{...(Store.get(x)||SRS.fresh()),s:'known',due:0})); Sound.play('known'); if(window.toast)toast('Отмечено: знаю'); }
       else if(a==='learn'){ ids.forEach(x=>{ Store.setArchive(x,false); Store.set(x,SRS.fresh()); }); if(window.toast)toast('В деку'); }
-      else if(a==='cram'){ ids.forEach(x=>{ Store.setArchive(x,false); Store.setCram(x,true); }); if(window.toast)toast('В «Зазубрить» 🔥'); }
+      else if(a==='cram'){ const x=primaryId(v); Store.setArchive(x,false); Store.setCram(x,true); if(window.toast)toast('В «Зазубрить» 🔥'); }
       else if(a==='archive'){ ids.forEach(x=>Store.setArchive(x,true)); if(window.toast)toast('В архив 🗄'); }
       else if(a==='edit'){ document.getElementById('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(id); return; }
       document.getElementById('modal').classList.remove('open');

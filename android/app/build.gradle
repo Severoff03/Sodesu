@@ -6,6 +6,14 @@ plugins {
 def keystoreProps = new Properties()
 def keystorePropsFile = rootProject.file("key.properties")
 if (keystorePropsFile.exists()) { keystoreProps.load(new FileInputStream(keystorePropsFile)) }
+def envKeystoreFile = System.getenv("SODESU_KEYSTORE_FILE")
+def hasReleaseSigning = keystorePropsFile.exists() || envKeystoreFile
+if (!keystorePropsFile.exists() && envKeystoreFile) {
+    keystoreProps['storeFile'] = envKeystoreFile
+    keystoreProps['storePassword'] = System.getenv("SODESU_KEYSTORE_PASSWORD")
+    keystoreProps['keyAlias'] = System.getenv("SODESU_KEY_ALIAS")
+    keystoreProps['keyPassword'] = System.getenv("SODESU_KEY_PASSWORD")
+}
 
 def versionText = file("../../www/js/version.js").text
 def versionCodeMatch = versionText =~ /code:\s*(\d+)/
@@ -37,7 +45,7 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropsFile.exists()) {
+            if (hasReleaseSigning) {
                 storeFile file(keystoreProps['storeFile'])
                 storePassword keystoreProps['storePassword']
                 keyAlias keystoreProps['keyAlias']
@@ -50,7 +58,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            if (keystorePropsFile.exists()) { signingConfig signingConfigs.release }
+            if (hasReleaseSigning) { signingConfig signingConfigs.release }
         }
     }
 

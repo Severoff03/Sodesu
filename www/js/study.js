@@ -5,7 +5,7 @@
 const Study = (() => {
   const D = window.GENKI_DATA;
   const $ = id=>document.getElementById(id);
-  let deck='kanji', mode='normal', q=[], cur=null, revealed=false, noKnow=false;
+  let deck='kanji', mode='normal', q=[], cur=null, revealed=false, noKnow=false, blitz=false, blitzTimer=0, blitzNextTimer=0, blitzToken=0;
   let onChange=()=>{}; function setOnChange(fn){ onChange=fn; } function setDeck(d){ deck=d; }
   const esc=s=>(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   const furi=()=>mode==='cram' ? !!Store.settings().cramFuri : !!Store.settings().studyFuri;
@@ -43,12 +43,14 @@ const Study = (() => {
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
   // При опустошении сессионной колоды пересобираем из актуального состояния —
   // иначе «на сегодня всё» при ещё оставшихся (по счётчикам) карточках.
-  function next(){ revealed=false; noKnow=false; cur=q.shift()||null; if(!cur && mode!=='cram'){ rebuild(); cur=q.shift()||null; } render(); }
+  function clearBlitzTimers(){ clearTimeout(blitzTimer); clearTimeout(blitzNextTimer); blitzTimer=0; blitzNextTimer=0; blitzToken++; }
+  function next(){ clearBlitzTimers(); revealed=false; noKnow=false; cur=q.shift()||null; if(!cur && mode!=='cram'){ rebuild(); cur=q.shift()||null; } render(); }
   function counters(){ const st=$('studyTop'); if(st) st.style.display=mode==='cram'?'none':'';
     if(mode==='cram')return;
     if($('leftLeft')) $('leftLeft').textContent=Math.min(remaining(),q.length+(cur?1:0)); }
   function topbar(){
     if(mode==='cram') return `<div class="chips deck-switch"><span class="pill on">🔥 Зазубрить (${q.length+(cur?1:0)})</span>
+      <span class="pill${blitz?' on':''}" id="blitzToggle">⚡ Блиц</span>
       <span class="pill" id="cramExit">← выйти</span></div>`;
     return `<div class="chips deck-switch">
       <span class="pill${deck==='kanji'?' on':''}" data-deck="kanji">漢 Кандзи</span>
@@ -74,15 +76,35 @@ const Study = (() => {
         <div class="hint" id="topHint">Тап — перевод · ← в деку · знаю →</div>
         <div class="back">${c.back(cur)}</div>
       </div><div id="controls"></div>`;
-    bindBar(); bindSwipe($('flash'));
+    bindBar(); bindSwipe($('flash')); scheduleBlitz();
   }
   function bindBar(){
     const sw=document.querySelector('.deck-switch'); if(!sw) return;
-    sw.onclick=e=>{ if(e.target.closest('#cramExit')){ mode='normal'; deck='kanji'; start(); return; }
+    sw.onclick=e=>{ if(e.target.closest('#cramExit')){ blitz=false; mode='normal'; deck='kanji'; start(); return; }
+      if(e.target.closest('#blitzToggle')){ clearBlitzTimers(); blitz=!blitz; Sound.play('tap'); render(); return; }
       const p=e.target.closest('[data-deck]'); if(!p||p.dataset.deck===deck)return; deck=p.dataset.deck; Sound.play('tap'); start(); };
   }
   function wasNew(){ return Store.status(cur.uid)==='new'; }
-  function showBack(){ const f=$('flash'); if(f) f.classList.add('revealed'); const th=$('topHint'); if(th) th.style.display='none'; revealed=true; Sound.play('flip'); }
+  function showBack(){ clearBlitzTimers(); const f=$('flash'); if(f) f.classList.add('revealed'); const th=$('topHint'); if(th) th.style.display='none'; revealed=true; Sound.play('flip'); }
+
+  function scheduleBlitz(){
+    clearTimeout(blitzTimer); clearTimeout(blitzNextTimer); blitzTimer=0; blitzNextTimer=0;
+    if(mode!=='cram'||!blitz||!cur||revealed) return;
+    const c=$('controls');
+    if(c) c.innerHTML='<div class="blitz-panel"><b>⚡ Блиц</b><span>Свайп вправо за 4 секунды</span></div>';
+    const token=++blitzToken;
+    blitzTimer=setTimeout(()=>blitzMiss(token),4000);
+  }
+  function blitzMiss(token){
+    if(token!==blitzToken||mode!=='cram'||!blitz||!cur||revealed) return;
+    const word=cur;
+    showBack();
+    if(window.WordAudio) WordAudio.speak(word.k||word.j, word.a||word.audio);
+    const c=$('controls');
+    if(c) c.innerHTML=`<div class="blitz-panel miss"><b>Не успел</b><span>${esc(word.k||word.j||'')}</span><small>${LU.ml(word.r||word.m||word.e||'')}</small></div>`;
+    const nextToken=blitzToken;
+    blitzNextTimer=setTimeout(()=>{ if(nextToken===blitzToken&&cur===word) cramNo(); },4000);
+  }
 
   function reveal(){
     if(revealed) return; showBack();

@@ -1,7 +1,7 @@
 ﻿[CmdletBinding()]
 param(
     [Alias('validate')][switch]$ValidateOnly,
-    [switch]$EarlyAccess,
+    [switch]$DebugBuild,
     [switch]$Beta,
     [switch]$AllowVersionReset,
     [string]$SigningReference,

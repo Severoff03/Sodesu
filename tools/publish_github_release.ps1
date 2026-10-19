@@ -6,17 +6,17 @@ if ($Repository -notmatch '^[\w.-]+/[\w.-]+$') { throw 'Invalid GitHub repositor
 $directory = Get-ReleaseDirectory $root $ReleaseDirectory
 $manifestPath = Join-Path $directory 'release.json'
 $manifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
+if ($manifest.earlyAccess -or (($manifest.PSObject.Properties.Name -contains 'debugBuild') -and $manifest.debugBuild)) { throw 'Debug builds are local only and cannot be published to GitHub Releases.' }
 Assert-VersionName $manifest.version
 if ($manifest.repository -ne $Repository) { throw 'Repository differs from the built release.' }
 $tag = 'v' + $manifest.version
-if ($manifest.earlyAccess) { $tag += '-early-access' }
 if ($manifest.PSObject.Properties.Name -contains 'tag') {
-    if ($manifest.tag -notmatch '^v\d+\.\d+(\.\d+)?(-beta|-early-access)?$') { throw 'Invalid release tag.' }
+    if ($manifest.tag -notmatch '^v\d+\.\d+(\.\d+)?(-beta)?$') { throw 'Invalid release tag.' }
     $tag = $manifest.tag
 }
 $assets = @()
 foreach ($asset in $manifest.assets) {
-    if ($asset.name -notmatch '^(Sodesu-v[\d.]+(-early-access)?\.apk|UPDATE\.txt)$') { throw 'Unexpected release asset.' }
+    if ($asset.name -notmatch '^(Sodesu-v[\d.]+\.apk|UPDATE\.txt)$') { throw 'Unexpected release asset.' }
     $path = Assert-ChildPath $directory (Join-Path $directory $asset.name)
     if ((Get-Item -LiteralPath $path).Length -ne $asset.size -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ine $asset.sha256) { throw "Release asset changed: $($asset.name)" }
     $assets += $path
@@ -49,14 +49,13 @@ try {
     $existing = @($releases | Where-Object tag_name -eq $tag)
     if (-not $existing.Count) {
         $arguments = @('release','create',$tag,'--repo',$Repository,'--target',$manifest.commit,'--title',$tag,'--notes-file',(Join-Path $directory 'UPDATE.txt'),'--draft')
-        if ($manifest.earlyAccess) { $arguments += '--prerelease' }
         Invoke-Checked gh $arguments | Out-Host
     }
     $remoteRelease = (Invoke-Checked gh @('release','view',$tag,'--repo',$Repository,'--json','isDraft,targetCommitish,assets,url') | Out-String) | ConvertFrom-Json
     if ($remoteRelease.isDraft) {
         Invoke-Checked gh (@('release','upload',$tag,'--repo',$Repository,'--clobber') + $assets) | Out-Host
         $editArguments = @('release','edit',$tag,'--repo',$Repository,'--draft=false')
-        if (-not $manifest.earlyAccess) { $editArguments += '--latest' }
+        $editArguments += '--latest'
         Invoke-Checked gh $editArguments | Out-Host
     }
     $remoteRelease = (Invoke-Checked gh @('release','view',$tag,'--repo',$Repository,'--json','isDraft,assets,url') | Out-String) | ConvertFrom-Json

@@ -4,7 +4,7 @@ package com.genki.app;
 public final class UpdatePolicyTest {
     private static void check(boolean condition) { if (!condition) throw new AssertionError(); }
     public static void main(String[] args) {
-        check(UpdatePolicy.channel(true, false, true, "v14.2.2-early-access"));
+        check(!UpdatePolicy.channel(true, false, true, "v14.2.2-early-access"));
         check(!UpdatePolicy.channel(true, false, false, "v14.2.2"));
         check(!UpdatePolicy.channel(false, false, true, "v14.2.2-early-access"));
         check(UpdatePolicy.channel(false, false, false, "v14.2.2"));
@@ -21,7 +21,7 @@ public final class UpdatePolicyTest {
         check(UpdatePolicy.compare("14.10.0", "14.9.9") > 0);
         check(UpdatePolicy.compare("v14.2.2-early-access", "14.2.2") == 0);
         check(UpdatePolicy.compare("14.2.1", "14.2.2") < 0);
-        check(UpdatePolicy.asset(true, "14.2.2", "Sodesu-v14.2.2-early-access.apk"));
+        check(!UpdatePolicy.asset(true, "14.2.2", "Sodesu-v14.2.2-early-access.apk"));
         check(!UpdatePolicy.asset(true, "14.2.2", "Sodesu-v14.2.2.apk"));
         check(!UpdatePolicy.asset(false, "14.2.2", "Sodesu-v14.2.2-early-access.apk"));
         check(!UpdatePolicy.asset(false, "14.2.2", "other.apk"));

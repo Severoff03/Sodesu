@@ -15,12 +15,11 @@ final class UpdatePolicy {
 
     static boolean channel(boolean debug, boolean draft, boolean prerelease, String tag) {
         if (draft || version(tag) == null) return false;
-        return debug ? prerelease && tag.endsWith("-early-access")
-                : !prerelease && !tag.endsWith("-early-access");
+        return !debug && !prerelease && !tag.endsWith("-early-access");
     }
 
     static boolean asset(boolean debug, String version, String name) {
-        return ("Sodesu-v" + version + (debug ? "-early-access" : "") + ".apk").equals(name);
+        return !debug && ("Sodesu-v" + version + ".apk").equals(name);
     }
 
     static int compare(String a, String b) {

@@ -58,7 +58,7 @@ final class AppUpdater {
         prefs = activity.getSharedPreferences("github_updates", 0);
     }
 
-    String channelName() { return debug ? "Early Access" : "Release"; }
+    String channelName() { return debug ? "Debug · вручную" : "Release"; }
 
     void resume() {
         foreground = true;
@@ -81,6 +81,7 @@ final class AppUpdater {
     private void message(String text) { if (alive()) Toast.makeText(activity, text, Toast.LENGTH_LONG).show(); }
 
     void check(boolean manual) {
+        if (debug) { if (manual) message("Debug-версия устанавливается вручную. Обновления GitHub отключены"); return; }
         if (!alive() || busy || prompting) { if (manual) message("Проверка или загрузка уже выполняется"); return; }
         long now = System.currentTimeMillis();
         if (now < prefs.getLong("retryAfter", 0)) {

@@ -22,13 +22,14 @@ function Assert-VersionName([string]$Name) {
     $null = [version]$Name
 }
 
-function Get-NextVersion($Current, [string]$Requested) {
+function Get-NextVersion($Current, [string]$Requested, [switch]$AllowVersionReset) {
+    if ($AllowVersionReset -and -not $Requested) { throw 'AllowVersionReset requires an explicitly requested version.' }
     if ($Requested) { $next = $Requested } else {
         $v = [version]$Current.Name
         $next = '{0}.{1}.{2}' -f $v.Major, $v.Minor, ($v.Build + 1)
     }
     Assert-VersionName $next
-    if ([version]$next -le [version]$Current.Name) { throw 'The release version must be higher than the current version.' }
+    if ([version]$next -le [version]$Current.Name -and -not $AllowVersionReset) { throw 'The release version must be higher than the current version.' }
     if ($Current.Code -ge 2100000000) { throw 'No Android versionCode remains.' }
     [pscustomobject]@{ Name = $next; Code = $Current.Code + 1 }
 }

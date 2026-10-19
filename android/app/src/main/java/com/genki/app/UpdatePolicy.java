@@ -6,11 +6,11 @@ import java.util.regex.Pattern;
 
 /** Channel and version rules shared by metadata selection and APK verification. */
 final class UpdatePolicy {
-    private static final Pattern VERSION = Pattern.compile("^v?((?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*))(-early-access)?$");
+    private static final Pattern VERSION = Pattern.compile("^v?((?:0|[1-9][0-9]*)\\.(?:0|[1-9][0-9]*))(\\.(?:0|[1-9][0-9]*))?(-early-access|-beta)?$");
 
     static String version(String tag) {
         Matcher match = VERSION.matcher(tag == null ? "" : tag);
-        return match.matches() ? match.group(1) : null;
+        return match.matches() ? match.group(1) + (match.group(2) == null ? ".0" : match.group(2)) : null;
     }
 
     static boolean channel(boolean debug, boolean draft, boolean prerelease, String tag) {

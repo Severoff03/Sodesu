@@ -22,6 +22,7 @@ if (!(sodesuVersionName ==~ /(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)/)) {
     throw new GradleException('VERSION_NAME must be X.Y.Z in version.properties')
 }
 def sodesuVersionCode = versionProps.getProperty('VERSION_CODE', '0').toInteger()
+def sodesuVersionLabel = versionProps.getProperty('VERSION_LABEL', sodesuVersionName)
 if (sodesuVersionCode < 1 || sodesuVersionCode > 2100000000) {
     throw new GradleException('Invalid VERSION_CODE in version.properties')
 }
@@ -37,6 +38,7 @@ android {
         versionCode sodesuVersionCode
         versionName sodesuVersionName
         resValue "string", "app_version", sodesuVersionName
+        resValue "string", "app_version_label", sodesuVersionLabel
         resValue "integer", "app_version_code", sodesuVersionCode.toString()
     }
 
@@ -80,6 +82,11 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (hasReleaseSigning) { signingConfig signingConfigs.release }
+            else if (providers.gradleProperty('sodesuLegacyBetaSigning').orNull == 'true') {
+                // Existing public beta users must retain their original signing certificate.
+                // The official builder verifies this certificate against the previous public APK.
+                signingConfig signingConfigs.debug
+            }
         }
     }
 

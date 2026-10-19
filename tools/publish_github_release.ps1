@@ -10,6 +10,10 @@ Assert-VersionName $manifest.version
 if ($manifest.repository -ne $Repository) { throw 'Repository differs from the built release.' }
 $tag = 'v' + $manifest.version
 if ($manifest.earlyAccess) { $tag += '-early-access' }
+if ($manifest.PSObject.Properties.Name -contains 'tag') {
+    if ($manifest.tag -notmatch '^v\d+\.\d+(\.\d+)?(-beta|-early-access)?$') { throw 'Invalid release tag.' }
+    $tag = $manifest.tag
+}
 $assets = @()
 foreach ($asset in $manifest.assets) {
     if ($asset.name -notmatch '^(Sodesu-v[\d.]+(-early-access)?\.apk|UPDATE\.txt)$') { throw 'Unexpected release asset.' }
@@ -51,7 +55,9 @@ try {
     $remoteRelease = (Invoke-Checked gh @('release','view',$tag,'--repo',$Repository,'--json','isDraft,targetCommitish,assets,url') | Out-String) | ConvertFrom-Json
     if ($remoteRelease.isDraft) {
         Invoke-Checked gh (@('release','upload',$tag,'--repo',$Repository,'--clobber') + $assets) | Out-Host
-        Invoke-Checked gh @('release','edit',$tag,'--repo',$Repository,'--draft=false') | Out-Host
+        $editArguments = @('release','edit',$tag,'--repo',$Repository,'--draft=false')
+        if (-not $manifest.earlyAccess) { $editArguments += '--latest' }
+        Invoke-Checked gh $editArguments | Out-Host
     }
     $remoteRelease = (Invoke-Checked gh @('release','view',$tag,'--repo',$Repository,'--json','isDraft,assets,url') | Out-String) | ConvertFrom-Json
     if ($remoteRelease.isDraft) { throw 'Release is still a draft.' }

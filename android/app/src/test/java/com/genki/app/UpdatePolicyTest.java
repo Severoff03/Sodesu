@@ -13,6 +13,11 @@ public final class UpdatePolicyTest {
         check(!UpdatePolicy.channel(true, false, true, "v14.2.2-beta"));
         check(!UpdatePolicy.channel(false, false, true, "v14.2.2"));
         check(!UpdatePolicy.channel(false, false, false, "v014.2.2"));
+        check(UpdatePolicy.channel(false, false, false, "v0.14-beta"));
+        check(!UpdatePolicy.channel(true, false, false, "v0.14-beta"));
+        check(!UpdatePolicy.channel(false, false, true, "v0.14-beta"));
+        check("0.14.0".equals(UpdatePolicy.version("v0.14-beta")));
+        check(UpdatePolicy.compare("v0.14-beta", "v0.13-beta") > 0);
         check(UpdatePolicy.compare("14.10.0", "14.9.9") > 0);
         check(UpdatePolicy.compare("v14.2.2-early-access", "14.2.2") == 0);
         check(UpdatePolicy.compare("14.2.1", "14.2.2") < 0);

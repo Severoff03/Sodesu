@@ -2,6 +2,9 @@
 param(
     [Alias('validate')][switch]$ValidateOnly,
     [switch]$EarlyAccess,
+    [switch]$Beta,
+    [switch]$AllowVersionReset,
+    [string]$SigningReference,
     [string]$Version,
     [string]$JavaHome,
     [string]$AndroidSdk,

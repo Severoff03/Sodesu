@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
         private final MainActivity act;
         Bridge(MainActivity a){ ctx = a; act = a; }
         @JavascriptInterface public String getAppVersionName(){ return ctx.getString(R.string.app_version); }
+        @JavascriptInterface public String getAppVersionLabel(){ return ctx.getString(R.string.app_version_label); }
         @JavascriptInterface public int getAppVersionCode(){ return ctx.getResources().getInteger(R.integer.app_version_code); }
         @JavascriptInterface public String getUpdateChannel(){ return act.updater.channelName(); }
         @JavascriptInterface public void checkUpdates(boolean manual){ act.runOnUiThread(() -> act.updater.check(manual)); }

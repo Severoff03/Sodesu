@@ -82,7 +82,7 @@ function Get-SourceFiles([string]$Root) {
         'docs/screenshots/dict.jpg', 'docs/screenshots/quiz.jpg')
     $files = New-Object 'System.Collections.Generic.List[string]'
     foreach ($path in $fixed) { if (Test-Path -LiteralPath (Join-Path $Root $path) -PathType Leaf) { $files.Add($path) } }
-    foreach ($folder in @('www', 'android/app/src/main', 'libraries')) {
+    foreach ($folder in @('www', 'android/app/src/main', 'android/app/src/test', 'libraries')) {
         $base = Join-Path $Root $folder
         $null = Assert-ChildPath $Root $base
         foreach ($file in Get-ChildItem -LiteralPath $base -File -Recurse) {

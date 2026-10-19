@@ -165,6 +165,7 @@ const App = (() => {
     if($('srcRows')) $('srcRows').onclick=e=>{ const all=e.target.closest('[data-srcall]'); if(all){ const s=all.dataset.srcall; const on=!D.meta.libraries.every(l=>Store.srcOn(s,l.id)); D.meta.libraries.forEach(l=>Store.setSrc(s,l.id,on)); buildSrcRows(); refreshSection(s); Sound.play('tap'); return; }
       const p=e.target.closest('[data-src]'); if(p){ const s=p.dataset.src,lib=p.dataset.lib; Store.setSrc(s,lib,!Store.srcOn(s,lib)); buildSrcRows(); refreshSection(s); } };
     if($('libAddBtn')) $('libAddBtn').onclick=openLibEditor;
+    if($('checkUpdatesBtn')) $('checkUpdatesBtn').onclick=()=>checkUpdate(true);
     if($('remoteLibs')) $('remoteLibs').onclick=e=>{ const b=e.target.closest('[data-remote-lib]'); if(b&&!b.disabled) installRemoteLib(b.dataset.remoteLib); };
     if($('libExportBtn')) $('libExportBtn').onclick=exportLibPick;
     if($('libImportFile')) $('libImportFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f){ return; } const r=new FileReader();
@@ -233,28 +234,12 @@ const App = (() => {
     }catch(err){ if($('libDownloadStatus')) $('libDownloadStatus').textContent='Не удалось скачать «'+lib.label+'»'; toast('Ошибка загрузки библиотеки'); }
     finally{ remoteDownloadBusy=false; buildRemoteLibs(); setTimeout(()=>{ const box=$('libDownloadProgress'); if(box)box.hidden=true; },1800); }
   }
-  function verNums(v){ return String(v||'').replace(/^[vV]/,'').split(/[^0-9]+/).filter(s=>s!=='').map(n=>parseInt(n,10)||0); }
-  function cmpVer(a,b){ const x=verNums(a),y=verNums(b); for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d>0?1:-1; } return 0; }
-  function showUpdate(tag,url){
-    if(document.getElementById('updOv')) return;
-    const o=document.createElement('div'); o.id='updOv'; o.className='onboard';
-    o.innerHTML=`<div class="ob-card"><div class="ob-h">Доступно обновление</div>
-      <div class="ob-row" style="display:block">Вышла новая версия <b>${esc(tag)}</b> (у вас ${esc(VERSION)}). Скачайте свежий релиз на GitHub.</div>
-      <div style="display:flex;gap:10px;margin-top:14px">
-        <button class="btn" id="updLater" style="flex:1">Позже</button>
-        <button class="btn primary" id="updGo" style="flex:1">Обновиться</button></div></div>`;
-    document.body.appendChild(o); const close=()=>o.remove(); o.addEventListener('click',e=>{ if(e.target===o) close(); });
-    o.querySelector('#updLater').onclick=close;
-    o.querySelector('#updGo').onclick=()=>{ close(); openExternal(url); };
-  }
-  function checkUpdate(){
-    if(!window.fetch) return;
-    fetch('https://api.github.com/repos/'+REPO+'/releases/latest',{headers:{'Accept':'application/vnd.github+json'}})
-      .then(r=>r.ok?r.json():null)
-      .then(j=>{ if(!j) return; const tag=(j.tag_name||j.name||'').trim(); if(!tag) return;
-        const url=j.html_url||('https://github.com/'+REPO+'/releases/latest');
-        if(cmpVer(tag, VERSION)>0) showUpdate(tag,url); })
-      .catch(()=>{});
+  function checkUpdate(manual){
+    const native=window.Android;
+    const channel=$('updateChannel');
+    if(channel) channel.textContent=native&&native.getUpdateChannel?native.getUpdateChannel():'Предпросмотр';
+    if(native && native.checkUpdates) native.checkUpdates(manual===true);
+    else if(manual===true) toast('Обновления доступны в Android-приложении');
   }
 
   // ---- Одноразовые подсказки (показываются один раз для человека) ----

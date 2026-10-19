@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     private WebView web;
+    private AppUpdater updater;
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private boolean ttsFailed = false;
@@ -59,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        updater = new AppUpdater(this);
 
         createDocLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -159,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
         Bridge(MainActivity a){ ctx = a; act = a; }
         @JavascriptInterface public String getAppVersionName(){ return ctx.getString(R.string.app_version); }
         @JavascriptInterface public int getAppVersionCode(){ return ctx.getResources().getInteger(R.integer.app_version_code); }
+        @JavascriptInterface public String getUpdateChannel(){ return act.updater.channelName(); }
+        @JavascriptInterface public void checkUpdates(boolean manual){ act.runOnUiThread(() -> act.updater.check(manual)); }
         @JavascriptInterface public void setActive(){ markActiveStatic(ctx); }
         /** Сохранить файл с выбором места (диалог системы). */
         @JavascriptInterface public void saveFile(String content, String filename, String mime){
@@ -331,7 +335,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (updater != null) updater.resume();
+    }
+
+    @Override
+    protected void onPause() {
+        if (updater != null) updater.pause();
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
+        if (updater != null) updater.destroy();
         if (tts != null) {
             tts.stop();
             tts.shutdown();

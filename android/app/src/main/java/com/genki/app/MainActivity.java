@@ -157,6 +157,8 @@ public class MainActivity extends AppCompatActivity {
         private final Context ctx;
         private final MainActivity act;
         Bridge(MainActivity a){ ctx = a; act = a; }
+        @JavascriptInterface public String getAppVersionName(){ return ctx.getString(R.string.app_version); }
+        @JavascriptInterface public int getAppVersionCode(){ return ctx.getResources().getInteger(R.integer.app_version_code); }
         @JavascriptInterface public void setActive(){ markActiveStatic(ctx); }
         /** Сохранить файл с выбором места (диалог системы). */
         @JavascriptInterface public void saveFile(String content, String filename, String mime){

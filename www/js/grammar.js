@@ -29,7 +29,7 @@ const Gram = (() => {
     const res=search(q); const sc=showComment();
     $('gramMeta').textContent=`Грамматика: ${res.length} · нажми для подробностей`;
     const box=$('gramResults');
-    if(!res.length){ box.innerHTML=`<div class="empty"><div class="big">📘</div>Ничего не найдено</div>`; return; }
+    if(!res.length){ box.innerHTML=`<div class="empty"><div class="big">📘</div>Ничего не найдено${norm(q)?'<button type="button" class="empty-add" id="gramAdd" aria-label="Добавить грамматику">+</button><div>Добавить грамматику</div>':''}</div>`; if($('gramAdd')) $('gramAdd').onclick=()=>App.addFromSearch('grammar', q); return; }
     box.innerHTML=res.map(g=>{
       const id=uid(g); const known=Store.status(id)==='known'; const fav=Store.favHas(id); const cram=Store.isCram(id);
       return `<div class="entry card${known?' known-entry':''}${cram?' cram-entry':''}" data-uid="${id}" data-gid="${g.id}">

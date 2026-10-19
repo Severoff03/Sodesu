@@ -120,7 +120,7 @@ const App = (() => {
     $('volume').value=Math.round(s.volume*100); $('volLbl').textContent=Math.round(s.volume*100)+'%';
     $('nkLbl').textContent=s.newKanji; $('nwLbl').textContent=s.newWords; $('ngLbl').textContent=s.newGrammar;
     if($('ccLbl')) $('ccLbl').textContent=(s.cramCooldown!=null?s.cramCooldown:10);
-    if($('cnLbl')) $('cnLbl').textContent=(s.cramNeed!=null?s.cramNeed:3);
+    if($('cnLbl')) $('cnLbl').textContent=Store.cramNeed();
     if($('gramCommentSel')) $('gramCommentSel').value = s.grammarComment==null?'auto':(s.grammarComment?'on':'off');
     if($('bgFit')) $('bgFit').checked = s.bgFit==='contain';
     if($('dictFuriSet')) $('dictFuriSet').checked = s.dictFuri!==false;
@@ -165,6 +165,7 @@ const App = (() => {
     if($('srcRows')) $('srcRows').onclick=e=>{ const all=e.target.closest('[data-srcall]'); if(all){ const s=all.dataset.srcall; const on=!D.meta.libraries.every(l=>Store.srcOn(s,l.id)); D.meta.libraries.forEach(l=>Store.setSrc(s,l.id,on)); buildSrcRows(); refreshSection(s); Sound.play('tap'); return; }
       const p=e.target.closest('[data-src]'); if(p){ const s=p.dataset.src,lib=p.dataset.lib; Store.setSrc(s,lib,!Store.srcOn(s,lib)); buildSrcRows(); refreshSection(s); } };
     if($('libAddBtn')) $('libAddBtn').onclick=openLibEditor;
+    if($('remoteLibs')) $('remoteLibs').onclick=e=>{ const b=e.target.closest('[data-remote-lib]'); if(b&&!b.disabled) installRemoteLib(b.dataset.remoteLib); };
     if($('libExportBtn')) $('libExportBtn').onclick=exportLibPick;
     if($('libImportFile')) $('libImportFile').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f){ return; } const r=new FileReader();
       r.onload=()=>{ try{ if(Sync.importCsv(f.name.replace(/\.csv$/i,''),r.result)){ mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); home(); toast('Библиотека добавлена ✓'); } else toast('Файл пуст или неверный формат CSV'); }catch(err){ toast('Не удалось прочитать файл'); } e.target.value=''; };
@@ -196,6 +197,42 @@ const App = (() => {
 
   // ---- Автопроверка версии по GitHub Releases ----
   const REPO='Severoff03/sodesu';
+  const REMOTE_LIBS=[
+    {name:'Полезные материалы',label:'Полезные материалы',path:'libraries/genki/Полезные материалы.csv',group:'Дополнительные материалы'},
+    ...['N5','N4','N3','N2','N1'].map(level=>({name:'Jisho-'+level,label:'Jisho '+level,path:'libraries/jlpt/Jisho-'+level+'.csv',group:'Jisho по уровням JLPT'}))
+  ];
+  let remoteDownloadBusy=false;
+  function remoteLibUrl(path){ return 'https://raw.githubusercontent.com/'+REPO+'/main/'+path.split('/').map(encodeURIComponent).join('/'); }
+  function remoteInstalled(name){ return (Store.customLibs()||[]).some(l=>l.name===name); }
+  function buildRemoteLibs(){
+    const el=$('remoteLibs'); if(!el) return;
+    const pending=REMOTE_LIBS.filter(x=>!remoteInstalled(x.name));
+    const groups=[...new Set(pending.map(x=>x.group))];
+    el.innerHTML=groups.map(group=>`<div class="remote-lib-group"><div class="remote-lib-title">${esc(group)}</div><div class="remote-lib-buttons">${pending.filter(x=>x.group===group).map(x=>`<button class="btn" data-remote-lib="${attr(x.name)}"${remoteDownloadBusy?' disabled':''}>⬇️ Скачать и установить ${esc(x.label)}</button>`).join('')}</div></div>`).join('');
+  }
+  function setRemoteProgress(name,loaded,total){
+    const box=$('libDownloadProgress'),bar=$('libDownloadBar'),status=$('libDownloadStatus'); if(!box||!bar||!status)return;
+    box.hidden=false; const known=total>0; bar.removeAttribute('value'); if(known){ bar.max=total; bar.value=loaded; }
+    const pct=known?Math.min(100,Math.round(loaded*100/total)):null;
+    status.textContent='Скачивание «'+name+'»'+(pct==null?'…':' — '+pct+'%');
+  }
+  async function installRemoteLib(name){
+    const lib=REMOTE_LIBS.find(x=>x.name===name); if(!lib||remoteDownloadBusy||remoteInstalled(name))return;
+    remoteDownloadBusy=true; buildRemoteLibs(); setRemoteProgress(lib.label,0,0);
+    try{
+      const response=await fetch(remoteLibUrl(lib.path),{cache:'no-store'}); if(!response.ok) throw new Error('HTTP '+response.status);
+      const total=Number(response.headers.get('content-length'))||0; let text='';
+      if(response.body&&response.body.getReader){ const reader=response.body.getReader(),decoder=new TextDecoder('utf-8'); let loaded=0;
+        while(true){ const part=await reader.read(); if(part.done)break; loaded+=part.value.byteLength; text+=decoder.decode(part.value,{stream:true}); setRemoteProgress(lib.label,loaded,total); }
+        text+=decoder.decode();
+      } else { text=await response.text(); setRemoteProgress(lib.label,text.length,text.length); }
+      if(!Sync.importCsv(lib.name,text)) throw new Error('CSV');
+      mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); home();
+      if($('libDownloadStatus')) $('libDownloadStatus').textContent='«'+lib.label+'» установлена ✓';
+      toast('Библиотека установлена ✓');
+    }catch(err){ if($('libDownloadStatus')) $('libDownloadStatus').textContent='Не удалось скачать «'+lib.label+'»'; toast('Ошибка загрузки библиотеки'); }
+    finally{ remoteDownloadBusy=false; buildRemoteLibs(); setTimeout(()=>{ const box=$('libDownloadProgress'); if(box)box.hidden=true; },1800); }
+  }
   function verNums(v){ return String(v||'').replace(/^[vV]/,'').split(/[^0-9]+/).filter(s=>s!=='').map(n=>parseInt(n,10)||0); }
   function cmpVer(a,b){ const x=verNums(a),y=verNums(b); for(let i=0;i<Math.max(x.length,y.length);i++){ const d=(x[i]||0)-(y[i]||0); if(d) return d>0?1:-1; } return 0; }
   function showUpdate(tag,url){
@@ -301,9 +338,49 @@ const App = (() => {
     const close=()=>o.remove(); o.addEventListener('click',e=>{ if(e.target===o) close(); });
     o.querySelector('#wnOk').onclick=close;
   }
-  function flame(){ const b=$('flameBtn'); if(!b) return; if(Store.settings().cramMode===false){ b.style.display='none'; return; } const ready=Store.cramList().some(u=>Store.cramReady(u)); b.style.display=ready?'':'none'; b.onclick=()=>{ Study.startCram(); hint('h_cram','Зазубрить 🔥','Здесь только слова из категории «Зазубрить». Свайп вправо — «Знаю» (3 раза — слово выходит). Свайп влево — перевод, слово вернётся через 10 минут. «Ещё» — показать сразу.'); }; }
+  function flame(){ const b=$('flameBtn'); if(!b) return; if(Store.settings().cramMode===false){ b.style.display='none'; return; } const ready=Store.cramList().some(u=>Store.cramReady(u)); b.style.display=ready?'':'none'; b.onclick=()=>{ Study.startCram(); hint('h_cram','Зазубрить 🔥','Здесь только слова из категории «Зазубрить». Нажимайте «Знаю» подряд: количество повторений для выхода выбирается в настройках (по умолчанию — 3). Свайп влево — перевод, слово вернётся через 10 минут. «Ещё» — показать сразу.'); }; }
   function onboard(){ if(Store.onboarded()) return; const o=document.createElement('div'); o.id='onboard'; o.innerHTML='<div class="ob-card"><div class="ob-h">Как пользоваться</div><div class="ob-row">🎴 <b>Дека</b> — тап по карточке покажет перевод.</div><div class="ob-row">➡️ Свайп вправо — «знаю».</div><div class="ob-row">⬅️ Свайп влево — в деку (повтор позже).</div><div class="ob-row">🔥 «Зазубрить» — частый повтор сложных слов с главной.</div><div class="ob-row">📚 Материалы и лимиты — в Настройках.</div><div class="ob-row">⬇️ Можно докачать библиотеки (в т.ч. <b>JLPT</b>, на базе jisho) и импортировать через Настройки → Библиотеки.</div><button class="btn" id="obLibs" style="width:100%;margin-top:10px">📚 Где скачать библиотеки</button><button class="btn primary" id="obClose" style="width:100%;margin-top:8px">Понятно!</button></div>'; document.body.appendChild(o); const obl=document.getElementById('obLibs'); if(obl) obl.onclick=()=>openExternal('https://github.com/Severoff03/sodesu/tree/main/libraries'); document.getElementById('obClose').onclick=()=>{ Store.setOnboarded(); o.remove(); }; }
-  function openLibEditor(preLib, preGroup){
+  // IME reading is available only when the keyboard exposes composition events.
+  function bindKanaAutofill(written, kana){
+    let composing=false, phonetic='', before='', start=0, end=0, manual=!!kana.value;
+    const readings=new Map();
+    const isKana=text=>/^[\u3041-\u3096\u30a1-\u30faー\s]+$/.test(text);
+    const hira=text=>text.replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+    function reading(text){
+      if(!text) return '';
+      if(isKana(text)) return hira(text);
+      if(readings.has(text)) return readings.get(text);
+      const matches=[...new Set((D.words||[]).filter(w=>w.j===text && w.k).map(w=>hira(w.k)))];
+      return matches.length===1?matches[0]:null;
+    }
+    function fill(){
+      if(manual) return;
+      const value=reading(written.value.trim());
+      kana.value=value==null?'':value;
+    }
+    kana.addEventListener('input',()=>{ manual=true; });
+    written.addEventListener('compositionstart',()=>{
+      composing=true; phonetic=''; before=written.value;
+      start=written.selectionStart==null?before.length:written.selectionStart;
+      end=written.selectionEnd==null?start:written.selectionEnd;
+    });
+    const capture=text=>{ if(text && isKana(text)) phonetic=hira(text); };
+    written.addEventListener('compositionupdate',e=>capture(e.data));
+    written.addEventListener('beforeinput',e=>{ if(composing) capture(e.data); });
+    written.addEventListener('compositionend',e=>{
+      composing=false;
+      const committed=e.data||'';
+      if(committed && phonetic){
+        readings.set(committed,phonetic);
+        const left=reading(before.slice(0,start)), right=reading(before.slice(end));
+        if(left!=null && right!=null) readings.set(before.slice(0,start)+committed+before.slice(end),left+phonetic+right);
+      }
+      fill();
+    });
+    written.addEventListener('input',()=>{ if(!composing) fill(); });
+    written.addEventListener('change',fill);
+  }
+  function openLibEditor(preLib, preGroup, context){
     const libs=Store.customLibs(); const ph={words:['Кандзи (опц.)','Кана','Перевод'],kanji:['Кандзи (1 символ)','Значение',''],grammar:['Конструкция','Шаблон','Значение/описание']};
     $('sheet').innerHTML=`<div class="grip"></div><div class="block-title" style="margin-top:0">Редактор библиотек</div>
       <div class="field"><label>Библиотека</label><select id="leLib" class="q-input"><option value="__new"${!preLib||preLib==='__new'?' selected':''}>+ Новая библиотека</option>${libs.map(l=>`<option value="${l.id}"${l.id===preLib?' selected':''}>${esc(l.name)}</option>`).join('')}</select></div>
@@ -320,7 +397,7 @@ const App = (() => {
     $('modal').dataset.stats=''; $('modal').classList.add('open');
     const delBtn=()=>{ const cur=$('leLib').value; $('leDel').style.display=(cur && cur!=='__new')?'':'none'; };
     const bindAudioFile=(fileId,inputId)=>{ const f=$(fileId), inp=$(inputId); if(!f||!inp) return; f.onchange=e=>{ const file=e.target.files&&e.target.files[0]; if(!file) return; const r=new FileReader(); r.onload=()=>{ inp.value=String(r.result||''); toast('Аудио добавлено'); }; r.readAsDataURL(file); }; };
-    const flds=()=>{ const a=ph[$('leType').value]||ph.words; const wordExtra=$('leType').value==='words'?`<input id="lePitch" class="q-input" placeholder="Тон (0, 1, 2 или 0,2)" style="margin-bottom:8px"><input id="leAudio" class="q-input" placeholder="Аудио URL / data: / assets/..." style="margin-bottom:8px"><label class="btn ghost" style="display:block;text-align:center;margin-bottom:8px">Выбрать аудиофайл<input type="file" id="leAudioFile" accept="audio/*" style="display:none"></label>`:''; $('leFields').innerHTML=`<input id="leF1" class="q-input" placeholder="${a[0]}" style="margin-bottom:8px">`+(a[1]?`<input id="leF2" class="q-input" placeholder="${a[1]}" style="margin-bottom:8px">`:'')+(a[2]?`<input id="leF3" class="q-input" placeholder="${a[2]}" style="margin-bottom:8px">`:'')+wordExtra; bindAudioFile('leAudioFile','leAudio'); };
+    const flds=()=>{ const a=ph[$('leType').value]||ph.words; const wordExtra=$('leType').value==='words'?`<input id="lePitch" class="q-input" placeholder="Тон (0, 1, 2 или 0,2)" style="margin-bottom:8px"><input id="leAudio" class="q-input" placeholder="Аудио URL / data: / assets/..." style="margin-bottom:8px"><label class="btn ghost" style="display:block;text-align:center;margin-bottom:8px">Выбрать аудиофайл<input type="file" id="leAudioFile" accept="audio/*" style="display:none"></label>`:''; $('leFields').innerHTML=`<input id="leF1" class="q-input" placeholder="${a[0]}" style="margin-bottom:8px">`+(a[1]?`<input id="leF2" class="q-input" placeholder="${a[1]}" style="margin-bottom:8px">`:'')+(a[2]?`<input id="leF3" class="q-input" placeholder="${a[2]}" style="margin-bottom:8px">`:'')+wordExtra; bindAudioFile('leAudioFile','leAudio'); if($('leType').value==='words'){ bindKanaAutofill($('leF1'),$('leF2')); $('leF2').insertAdjacentHTML('afterend','<div class="field-help">Кана подставляется из японского ввода, если клавиатура передаёт чтение. Её можно исправить вручную.</div>'); } };
     const nb=()=>{ $('leNewBox').style.display=$('leLib').value==='__new'?'':'none'; };
     // Список уже созданных тем/занятий выбранной библиотеки + «новая».
     const pg=()=>{ const id=$('leLib').value; const lib=id!=='__new'?Store.getCustomLib(id):null;
@@ -329,12 +406,25 @@ const App = (() => {
       ng(); };
     const ng=()=>{ $('leGroupName').style.display=$('leGroup').value==='__newg'?'':'none'; };
     $('leType').onchange=flds; $('leLib').onchange=()=>{ nb(); pg(); delBtn(); }; $('leGroup').onchange=ng; flds(); nb(); pg(); delBtn();
+    if(context){
+      $('sheet').querySelector('.block-title').textContent=context.type==='grammar'?'Добавить грамматику':'Добавить слово';
+      $('leType').value=context.type; $('leType').disabled=true; flds();
+      const query=String(context.query||'').trim();
+      const field=context.type==='grammar'?'leF1':(/[\u3040-\u30ff\u3400-\u9fff]/.test(query)?(/^[\u3040-\u30ffー\s]+$/.test(query)?'leF2':'leF1'):'leF3');
+      $(field).value=query;
+      $(field).dispatchEvent(new Event('input'));
+      $(field).focus();
+    }
     // Сохранить выбор библиотеки/занятия (после добавления слова поля очищаются, выбор остаётся).
     if(preGroup!=null && $('leGroup').querySelector('option[value="'+preGroup+'"]')){ $('leGroup').value=preGroup; ng(); }
     $('leClose').onclick=()=>$('modal').classList.remove('open');
     $('leDel').onclick=()=>{ const id=$('leLib').value; if(!id||id==='__new') return; const lib=Store.getCustomLib(id); const nm=lib?lib.name:'библиотеку';
       confirmBox('Удалить библиотеку?','«'+nm+'» и все её слова/кандзи/грамматика будут удалены безвозвратно.','Удалить',()=>{ Store.removeCustomLib(id); mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); toast('Библиотека удалена'); $('modal').classList.remove('open'); openLibEditor(); }); };
-    $('leAdd').onclick=()=>{ let libId=$('leLib').value; if(libId==='__new') libId=Store.addCustomLib($('leName').value.trim()||'Моя библиотека',$('leKind').value);
+    $('leAdd').onclick=()=>{
+      const type=$('leType').value;
+      const required=type==='words'?['leF2','leF3']:type==='kanji'?['leF1','leF2']:['leF1','leF3'];
+      if(required.some(id=>!$(id).value.trim())){ toast('Заполните обязательные поля'); return; }
+      let libId=$('leLib').value; if(libId==='__new') libId=Store.addCustomLib($('leName').value.trim()||'Моя библиотека',$('leKind').value);
       const lib=Store.getCustomLib(libId); let g, gname; const gv=$('leGroup') ? $('leGroup').value : '__newg';
       if(gv && gv!=='__newg' && lib.groups[gv]){ g=+gv; gname=lib.groups[gv]; }
       else { gname=$('leGroupName').value.trim()||'1'; g=null; for(const k in lib.groups){ if(lib.groups[k]===gname) g=+k; } if(g===null){ const ns=Object.keys(lib.groups).map(Number); g=ns.length?Math.max(...ns)+1:1; } }
@@ -343,7 +433,7 @@ const App = (() => {
       if(t==='words'){ if(!f2||!f3){ toast('Заполни кану и перевод'); return; } Store.addCustomItem(libId,'words',{j:f1.trim(),k:f2.trim(),r:f3.trim(),e:'',pa,a},g,gname); }
       else if(t==='kanji'){ if(!f1||!f2){ toast('Заполни кандзи и значение'); return; } Store.addCustomItem(libId,'kanji',{c:f1.trim(),m:f2.trim()},g,gname); }
       else { if(!f1||!f3){ toast('Заполни конструкцию и значение'); return; } Store.addCustomItem(libId,'grammar',{t:f1.trim(),p:f2.trim(),m:f3.trim()},g,gname); }
-      mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); toast('Добавлено ✓'); openLibEditor(libId, String(g)); };
+      mergeCustom(); buildLibs(); buildSrcRows(); refreshSection(); toast('Добавлено ✓'); if(context){ $('modal').classList.remove('open'); } else openLibEditor(libId, String(g)); };
   }
   function doExportLib(lib){ Sync.downloadCsv((lib.name||'library')+'.csv', libToCsv(lib)); if(!(window.Android&&window.Android.saveFile)) toast('Файл сохранён в Загрузки'); }
   function exportLibPick(){ const libs=Store.customLibs(); if(!libs.length){ toast('Нет своих библиотек'); return; }
@@ -386,9 +476,11 @@ const App = (() => {
     lib.items.words.forEach(x=>rows.push(['word',lib.groups[x.l]||x.l,x.j||'',x.k||'',x.r||'','',x.pa||x.pitch||'',x.a||x.audio||''])); lib.items.kanji.forEach(x=>rows.push(['kanji',lib.groups[x.l]||x.l,x.c||'','',x.m||'','',''])); lib.items.grammar.forEach(x=>rows.push(['grammar',lib.groups[x.l]||x.l,x.t||'','',x.m||'',x.p||'','','']));
     return rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); }
   function init(){
-    baseKanji=D.kanji.map(k=>({...k,uid:'k'+k.id}));
-    baseWords=D.vocab.map(v=>({...v,uid:'w'+v.id}));
-    baseGrammar=D.grammar.map(g=>({...g,uid:'g'+g.id}));
+    // При чистой установке в приложении остаются только встроенные Genki 1/2.
+    D.meta.libraries=D.meta.libraries.filter(l=>l.id!=='useful');
+    baseKanji=D.kanji.filter(k=>k.lib!=='useful').map(k=>({...k,uid:'k'+k.id}));
+    baseWords=D.vocab.filter(v=>v.lib!=='useful').map(v=>({...v,uid:'w'+v.id}));
+    baseGrammar=D.grammar.filter(g=>g.lib!=='useful').map(g=>({...g,uid:'g'+g.id}));
     mergeCustom();
     if(!THEMES.some(t=>t.id===Store.settings().theme)) Store.setSetting('theme','dark');
     applyTheme(Store.settings().theme); Store.touchOpen();
@@ -404,11 +496,12 @@ const App = (() => {
     // Каждый блок — отдельно, чтобы сбой одного модуля не ронял весь интерфейс (главную).
     const safe=(fn)=>{ try{ fn(); }catch(e){ try{ console.error('init',e); }catch(_){} } };
     safe(Dict.init); safe(Gram.init); safe(()=>{ KList.init(); KList.setOnChange(home); }); safe(()=>Study.setOnChange(()=>{}));
-    safe(buildThemes); safe(Test.init); safe(bindSettings); safe(Sync.init); safe(home); safe(flame); safe(onboard); safe(whatsNew); safe(checkUpdate);
+    safe(buildThemes); safe(Test.init); safe(bindSettings); safe(buildRemoteLibs); safe(Sync.init); safe(home); safe(flame); safe(onboard); safe(whatsNew); safe(checkUpdate);
   }
   function esc(s){ return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
   function attr(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
   if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded',init);
-  return { go, editItem };
+  function addFromSearch(type, query){ if(type!=='words' && type!=='grammar') return; openLibEditor(undefined, undefined, {type,query}); }
+  return { go, editItem, addFromSearch };
 })();
 window.App = App;

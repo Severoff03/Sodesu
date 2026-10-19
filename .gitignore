@@ -7,6 +7,26 @@
 android/.gradle/
 android/.idea/
 key.properties
+
+# Local release tools, output and private configuration
+/Builder/
+/releases/
+/build/
+/Build Release.exe
+/Build Releases.exe
+/Public Release.exe
+/UPDATE.txt
+/.github/
+/.idea/
+/.codex-remote-attachments/
+/Early access/
+/Sodesu * release/
+/Sodesu-*-release.zip
+/android/app/release/
+/android/build/
+.env
+.env.*
+*.log
 android/app/build/
 android/local.properties
 *.iml

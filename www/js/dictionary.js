@@ -112,7 +112,7 @@ const Dict = (() => {
     currentResults=search(q);
     shown=0;
     const box=$('dictResults');
-    if(!currentResults.length){ $('dictMeta').textContent='Найдено: 0 · 出典 Genki / материалы'; box.innerHTML=`<div class="empty"><div class="big">🔍</div>Ничего не найдено</div>`; return; }
+    if(!currentResults.length){ $('dictMeta').textContent='Найдено: 0 · 出典 Genki / материалы'; box.innerHTML=`<div class="empty"><div class="big">🔍</div>Ничего не найдено${norm(q)?'<button type="button" class="empty-add" id="dictAdd" aria-label="Добавить слово">+</button><div>Добавить слово</div>':''}</div>`; if($('dictAdd')) $('dictAdd').onclick=()=>App.addFromSearch('words', q); return; }
     box.innerHTML='';
     appendPage();
     maybeLoadMore();
@@ -155,6 +155,7 @@ const Dict = (() => {
     box.addEventListener('click',e=>{ if(e.target.closest('[data-fav]')) return; if(moved){ moved=false; return; } const c=e.target.closest('[data-uid]'); if(c) openMenu(c.dataset.uid); });
   }
   function openMenu(id){ const v=wordByUid(id); if(!v) return;
+    const editable=groupItems(v).filter(x=>x.clib && x.ctype==='words' && x.ci!=null);
     const sheet=document.getElementById('sheet');
     const cramOn=Store.settings().cramMode!==false;
     const details=groupItems(v).map(x=>`<div class="dict-sheet-row"><b>${LU.esc(LU.libName(x.lib))}</b><span>${LU.lessonLabel(x.lib,x.l)}</span><p>${LU.ml(x.r)}</p>${x.e?`<small>${LU.ml(x.e)}</small>`:''}</div>`).join('');
@@ -166,7 +167,7 @@ const Dict = (() => {
         <button class="btn" data-act="learn">🎴 В деку</button>
         ${cramOn?'<button class="btn" data-act="cram">🔥 Зазубрить</button>':''}
         <button class="btn" data-act="archive">🗄 В архив</button>
-        ${v.clib?`<button class="btn" data-act="edit" style="grid-column:1/-1">✏️ Редактировать (своя библиотека)</button>`:''}
+        ${editable.map((x,i)=>`<button class="btn" data-act="edit" data-edit-index="${i}" style="grid-column:1/-1">✏️ Редактировать (${editable.length===1?'своя библиотека':LU.esc(LU.libName(x.lib))+' · '+LU.esc(x.r)})</button>`).join('')}
         <button class="btn ghost" data-act="close" style="grid-column:1/-1">Закрыть</button></div>`;
     const mo=document.getElementById('modal'); mo.dataset.stats=''; mo.classList.add('open');
     sheet.querySelector('.actions').onclick=e=>{ const b=e.target.closest('[data-act]'); if(!b)return; const a=b.dataset.act;
@@ -175,7 +176,7 @@ const Dict = (() => {
       else if(a==='learn'){ ids.forEach(x=>{ Store.setArchive(x,false); Store.set(x,SRS.fresh()); }); if(window.toast)toast('В деку'); }
       else if(a==='cram'){ const x=primaryId(v); Store.setArchive(x,false); Store.setCram(x,true); if(window.toast)toast('В «Зазубрить» 🔥'); }
       else if(a==='archive'){ ids.forEach(x=>Store.setArchive(x,true)); if(window.toast)toast('В архив 🗄'); }
-      else if(a==='edit'){ document.getElementById('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(id); return; }
+      else if(a==='edit'){ const item=editable[Number(b.dataset.editIndex)]; if(!item) return; document.getElementById('modal').classList.remove('open'); if(window.App&&App.editItem) App.editItem(uid(item)); return; }
       document.getElementById('modal').classList.remove('open');
       const node=document.querySelector('[data-uid="'+id+'"]');
       if(node){

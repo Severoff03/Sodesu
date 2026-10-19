@@ -9,12 +9,13 @@ const Store = (() => {
     deckDaily:{date:'',kanji:10,words:10,grammar:5}, onboarded:false, hints:{} };
   const defSettings = { theme:'dark', sound:true, soundSet:'theme', volume:0.6,
     newKanji:10, newWords:10, newGrammar:5, lessMin:1, lessMax:23, yuruBg:'1', bgFit:'cover', studyFuri:false, cramFuri:false, dictFuri:true, studyAudioButton:true, pitchAccent:true, cramMode:true, cramCooldown:10, cramNeed:3,
-    libs:{g1:true,g2:true,useful:true}, libLess:{}, libThemes:{}, customBg:{}, grammarComment:null,
+    libs:{g1:true,g2:true}, libLess:{}, libThemes:{}, customBg:{}, grammarComment:null,
     srcLibs:{}, deckLibs:null };
 
   let state = load(KEY, defState);
   let settings = load(SET, defSettings);
-  if(!settings.libs) settings.libs={g1:true,g2:true,useful:true};
+  settings.cramNeed = normalizeCramNeed(settings.cramNeed);
+  if(!settings.libs) settings.libs={g1:true,g2:true};
   if(!settings.libLess) settings.libLess={};
   if(!settings.libThemes) settings.libThemes={};
   if(!settings.customBg) settings.customBg={};
@@ -26,7 +27,8 @@ const Store = (() => {
   let rev=0; // версия данных — для пропуска лишних ререндеров списков
   function load(k,d){ try{ const r=localStorage.getItem(k); return r?Object.assign(JSON.parse(JSON.stringify(d)),JSON.parse(r)):JSON.parse(JSON.stringify(d)); }catch(e){ return JSON.parse(JSON.stringify(d)); } }
   function save(){ rev++; try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} }
-  function saveS(){ rev++; try{ localStorage.setItem(SET,JSON.stringify(settings)); }catch(e){} }
+  function normalizeCramNeed(value){ const n=Number(value); return value==null || value==='' || !Number.isFinite(n) ? 3 : Math.max(1,Math.min(10,Math.round(n))); }
+  function saveS(){ settings.cramNeed=normalizeCramNeed(settings.cramNeed); rev++; try{ localStorage.setItem(SET,JSON.stringify(settings)); }catch(e){} }
   function today(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
   const DKEY={kanji:'k',words:'w',grammar:'g'};
   const SKEY={newKanji:'kanji',newWords:'words',newGrammar:'grammar'};
@@ -61,9 +63,9 @@ const Store = (() => {
     deckDailyDec:deck=>{ const d=deckDaily(); if(d[deck]>0){ d[deck]-=1; save(); } return Math.max(0,d[deck]||0); },
     favHas:uid=>!!state.fav[uid], favToggle:uid=>{ if(state.fav[uid]) delete state.fav[uid]; else state.fav[uid]=1; save(); return !!state.fav[uid]; },
     isCram:uid=>!!state.cram[uid], setCram:(uid,on)=>{ if(on) state.cram[uid]=1; else delete state.cram[uid]; delete state.cramHits[uid]; save(); }, cramList:()=>Object.keys(state.cram),
-    cramNeed:()=>settings.cramNeed!=null?settings.cramNeed:3, cramHits:uid=>state.cramHits[uid]||0,
+    cramNeed:()=>normalizeCramNeed(settings.cramNeed), cramHits:uid=>state.cramHits[uid]||0,
     // «Знаю» в «Зазубрить». Нужно N раз ПОДРЯД. Возвращает остаток (0 = слово вышло из категории).
-    cramHit:uid=>{ if(!state.cram[uid]) return 0; const need=settings.cramNeed!=null?settings.cramNeed:3; const n=(state.cramHits[uid]||0)+1; if(n>=need){ delete state.cram[uid]; delete state.cramHits[uid]; delete state.cramCool[uid]; save(); return 0; } state.cramHits[uid]=n; save(); return need-n; },
+    cramHit:uid=>{ if(!state.cram[uid]) return 0; const need=normalizeCramNeed(settings.cramNeed); const n=(state.cramHits[uid]||0)+1; if(n>=need){ delete state.cram[uid]; delete state.cramHits[uid]; delete state.cramCool[uid]; save(); return 0; } state.cramHits[uid]=n; save(); return need-n; },
     // «Не знаю» — сбрасывает серию (счётчик подряд) на ноль.
     cramReset:uid=>{ if(state.cramHits[uid]){ delete state.cramHits[uid]; save(); } },
     // Пауза: слово не показывается в «Зазубрить» до истечения.

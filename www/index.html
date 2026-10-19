@@ -106,20 +106,21 @@
         <div class="yuru-variants" id="yuruRow"></div>
       </div>
 
-      <div class="setting card">
-        <h3>Расширенная кастомизация</h3>
-        <p>Режим «Зазубрить», настройки деки и отображение грамматики.</p>
-        <button class="btn primary" id="advancedBtn" style="width:100%">Открыть расширенную кастомизацию</button>
-      </div>
-      <div id="advancedSettings" class="advanced-settings">
-        <div class="block-title">Расширенная кастомизация</div>
         <div class="setting card">
           <h3>Режим «Зазубрить»</h3>
           <label class="toggle"><input type="checkbox" id="cramModeSet"> Включить режим «Зазубрить»</label>
           <label class="toggle"><input type="checkbox" id="cramFuriSet"> Фуригана в «Зазубрить»</label>
           <div class="stepper"><span>Пауза «Зазубрить» (мин)</span><button class="st-btn" data-step="cramCooldown" data-d="-1">−</button><b id="ccLbl">10</b><button class="st-btn" data-step="cramCooldown" data-d="1">+</button></div>
-          <div class="stepper"><span>«Знаю» подряд для выхода</span><button class="st-btn" data-step="cramNeed" data-d="-1">−</button><b id="cnLbl">3</b><button class="st-btn" data-step="cramNeed" data-d="1">+</button></div>
+          <div class="stepper"><span>Повторений до выхода</span><button class="st-btn" data-step="cramNeed" data-d="-1" aria-label="Уменьшить число повторений">−</button><b id="cnLbl" aria-live="polite">3</b><button class="st-btn" data-step="cramNeed" data-d="1" aria-label="Увеличить число повторений">+</button></div>
+          <p>Сколько раз подряд нажать «Знаю», чтобы слово вышло из режима. По умолчанию — 3. «Не знаю» сбрасывает серию.</p>
         </div>
+      <div class="setting card">
+        <h3>Расширенная кастомизация</h3>
+        <p>Настройки деки и отображение грамматики.</p>
+        <button class="btn primary" id="advancedBtn" style="width:100%">Открыть расширенную кастомизацию</button>
+      </div>
+      <div id="advancedSettings" class="advanced-settings">
+        <div class="block-title">Расширенная кастомизация</div>
         <div class="setting card">
           <h3>Настройки деки</h3>
           <div class="stepper"><span>Кандзи в день</span><button class="st-btn" data-step="newKanji" data-d="-1">−</button><b id="nkLbl">10</b><button class="st-btn" data-step="newKanji" data-d="1">+</button></div>
@@ -144,6 +145,11 @@
       <div class="setting card">
         <h3>Материалы деки</h3>
         <p>Какие библиотеки и занятия/темы участвуют в «Дека» и тестах.</p>
+        <div id="remoteLibs"></div>
+        <div id="libDownloadProgress" class="lib-download-progress" hidden>
+          <div class="lib-download-status" id="libDownloadStatus">Подготовка…</div>
+          <progress id="libDownloadBar" max="100" value="0"></progress>
+        </div>
         <button class="btn" id="libsAll" style="width:100%;margin-bottom:10px">Выбрать всё / снять всё</button>
         <div id="libsRow"></div>
       </div>

@@ -519,13 +519,19 @@ body{ background:var(--bg) !important; }
 .speak-btn{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;flex:none;border-radius:50%;border:1px solid var(--line);background:var(--panel2);color:var(--accent);font-size:12px;line-height:1;cursor:pointer}
 .speak-btn:active{transform:scale(.94)}
 .pitch{display:inline-flex;align-items:flex-end;gap:1px;font-family:var(--jp);line-height:1.1;color:var(--accent)}
-.pitch.plain{display:inline;color:var(--accent);border:0}
+.pitch.plain{display:inline;color:#fff;border:0;text-decoration:none}
 .pitch.compact{font-size:.86em;gap:0}
 .pitch .mora{position:relative;display:inline-block;padding-top:7px;min-width:.8em;text-align:center}
 .pitch .mora::before{content:"";position:absolute;left:0;right:0;top:2px;border-top:2px solid currentColor}
 .pitch .mora.lo{transform:translateY(3px);color:var(--muted2)}
 .pitch .mora.hi{transform:translateY(-1px);color:var(--accent)}
 .pitch-var{margin-left:3px;color:var(--muted2);font-size:10px}
+.remote-lib-group{margin:0 0 12px}.remote-lib-group:first-child{margin-top:0}
+.remote-lib-title{font-size:12px;color:var(--muted2);margin-bottom:7px}
+.remote-lib-buttons{display:flex;flex-direction:column;gap:7px}
+.remote-lib-buttons .btn{width:100%;min-height:40px;padding:8px;font-size:12px;text-align:left}
+.lib-download-progress{margin:12px 0}.lib-download-status{font-size:12px;color:var(--muted);margin-bottom:6px}
+.lib-download-progress progress{display:block;width:100%;height:10px;accent-color:var(--accent)}
 .study-pitch{margin-top:6px;font-size:18px}
 .study-audio-corner{position:absolute;right:18px;bottom:18px;z-index:2}
 .study-audio-corner .speak-btn{width:44px;height:44px;font-size:15px;background:color-mix(in srgb,var(--panel2) 82%,transparent)}
@@ -534,3 +540,9 @@ body{ background:var(--bg) !important; }
   .entry .jp{min-width:76px;font-size:20px}
   .speak-btn{width:28px;height:28px}
 }
+
+.empty-add{display:block;width:88px;height:88px;margin:24px auto 12px;border-radius:50%;border:2px solid var(--accent);background:var(--panel2);color:var(--accent);font-size:54px;line-height:1;cursor:pointer;touch-action:manipulation}
+.empty-add:active{transform:scale(.95)}
+.empty-add:focus-visible{outline:3px solid var(--accent);outline-offset:5px}
+
+.field-help{font-size:12px;line-height:1.45;color:var(--muted);margin:0 0 12px}

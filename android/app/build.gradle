@@ -15,13 +15,16 @@ if (!keystorePropsFile.exists() && envKeystoreFile) {
     keystoreProps['keyPassword'] = System.getenv("SODESU_KEY_PASSWORD")
 }
 
-def versionText = file("../../www/js/version.js").text
-def versionCodeMatch = versionText =~ /code:\s*(\d+)/
-def versionNameMatch = versionText =~ /name:\s*['"]([^'"]+)['"]/
-def versionLabelMatch = versionText =~ /label:\s*['"]([^'"]+)['"]/
-def sodesuVersionCode = versionCodeMatch.find() ? versionCodeMatch.group(1).toInteger() : 1
-def sodesuVersionName = versionNameMatch.find() ? versionNameMatch.group(1) : "1.0"
-def sodesuVersionLabel = versionLabelMatch.find() ? versionLabelMatch.group(1) : sodesuVersionName
+def versionProps = new Properties()
+file("../../version.properties").withInputStream { versionProps.load(it) }
+def sodesuVersionName = versionProps.getProperty('VERSION_NAME', '')
+if (!(sodesuVersionName ==~ /(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)/)) {
+    throw new GradleException('VERSION_NAME must be X.Y.Z in version.properties')
+}
+def sodesuVersionCode = versionProps.getProperty('VERSION_CODE', '0').toInteger()
+if (sodesuVersionCode < 1 || sodesuVersionCode > 2100000000) {
+    throw new GradleException('Invalid VERSION_CODE in version.properties')
+}
 
 android {
     namespace 'com.genki.app'
@@ -33,7 +36,8 @@ android {
         targetSdk 34
         versionCode sodesuVersionCode
         versionName sodesuVersionName
-        resValue "string", "app_version", sodesuVersionLabel
+        resValue "string", "app_version", sodesuVersionName
+        resValue "integer", "app_version_code", sodesuVersionCode.toString()
     }
 
     // Берём веб-приложение напрямую из ../../www (единый источник, без дублей)
@@ -44,17 +48,34 @@ android {
     }
 
     signingConfigs {
+        debug {
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+        }
+
         release {
             if (hasReleaseSigning) {
                 storeFile file(keystoreProps['storeFile'])
                 storePassword keystoreProps['storePassword']
                 keyAlias keystoreProps['keyAlias']
                 keyPassword keystoreProps['keyPassword']
+                enableV1Signing true
+                enableV2Signing true
+                enableV3Signing true
             }
         }
     }
 
     buildTypes {
+        diagnostic {
+            initWith release
+            applicationIdSuffix '.compat'
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['release']
+            resValue "string", "app_name", "Sodesu Test Build"
+        }
+
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

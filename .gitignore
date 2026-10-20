@@ -48,3 +48,18 @@ __pycache__/
 *.keystore
 *.jks
 key.properties
+
+# Local developer tools and private signing material
+/Build-Releases.ps1
+/Public-Release.ps1
+/RELEASING.md
+/tools/
+/.agents/
+/.codex/
+/.aws/
+**/Security/
+*.key
+*.pem
+*.p12
+*.pfx
+*.pub
